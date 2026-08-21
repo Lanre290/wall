@@ -152,7 +152,7 @@ export default function MyWallsPage() {
               <p className="text-xs font-medium text-gray-600 uppercase tracking-widest mb-4">{wall.notesCount} NOTES</p>
               
               <div className="flex gap-2">
-                {wall.thumbnails.map((color, i) => (
+                {wall.thumbnails.map((color: string, i: number) => (
                   <div key={i} className={`w-10 h-12 rounded bg-white shadow-sm flex flex-col overflow-hidden border border-gray-100`}>
                     <div className="h-1.5 w-full bg-white" />
                     <div className={`flex-1 w-full ${color} opacity-80`} />

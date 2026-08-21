@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     // Generate JWT for session management
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: user.getDataValue('id'), email: user.getDataValue('email') },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -49,10 +49,10 @@ export async function POST(req: Request) {
     return NextResponse.json({
       message: 'Authentication successful',
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
+        id: user.getDataValue('id'),
+        name: user.getDataValue('name'),
+        email: user.getDataValue('email'),
+        avatarUrl: user.getDataValue('avatarUrl'),
       },
     });
 
