@@ -259,7 +259,7 @@ export default function ThingsWeNeverSaidPage() {
         </button>
       </div>
 
-      <BottomNav active="" />
+      <BottomNav />
 
       {/* Leave a Note Modal */}
       {isModalOpen && (
