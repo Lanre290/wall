@@ -1,0 +1,586 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { BottomNav } from "../../components/BottomNav";
+import { Share, MoreHorizontal, PenSquare, X, LayoutGrid, Compass, Info, Copy, Download, Loader2 } from "lucide-react";
+
+type Note = {
+  id: number;
+  text: string;
+  author: string | null;
+  color: string;
+  x: number;
+  y: number;
+  rotate: number;
+  isAnonymous: boolean;
+  heartsCount?: number;
+};
+
+type WallData = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  privacy: string;
+  allowAnonymous: boolean;
+};
+
+export default function WallClient({ slug }: { slug: string }) {
+  const [wall, setWall] = useState<WallData | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [displayUrl, setDisplayUrl] = useState("");
+  
+  // Note Form State
+  const [newText, setNewText] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(true);
+  const [selectedColor, setSelectedColor] = useState(0);
+
+  // Drag State
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [dragInfo, setDragInfo] = useState<{ id: number; startX: number; startY: number; initX: number; initY: number } | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent, note: Note) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const target = e.currentTarget as HTMLElement;
+    target.setPointerCapture(e.pointerId);
+    setDragInfo({ id: note.id, startX: e.clientX, startY: e.clientY, initX: note.x, initY: note.y });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent, note: Note) => {
+    if (!dragInfo || dragInfo.id !== note.id || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const deltaX = ((e.clientX - dragInfo.startX) / rect.width) * 100;
+    const deltaY = ((e.clientY - dragInfo.startY) / rect.height) * 100;
+    
+    setNotes(prev => prev.map(n => 
+      n.id === note.id ? { ...n, x: dragInfo.initX + deltaX, y: dragInfo.initY + deltaY } : n
+    ));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!dragInfo) return;
+    const target = e.currentTarget as HTMLElement;
+    target.releasePointerCapture(e.pointerId);
+    setDragInfo(null);
+  };
+
+  const colors = [
+    { bg: "bg-[#EAEAC2]", dot: "bg-[#D1D19C]" }, // Yellowish
+    { bg: "bg-[#DFE4F2]", dot: "bg-[#B5C2DC]" }, // Bluish
+    { bg: "bg-[#F3CAD9]", dot: "bg-[#D6A1B6]" }, // Pinkish
+    { bg: "bg-[#E6E4E6]", dot: "bg-[#C4B7D2]" }, // Grey/Purple
+  ];
+
+  useEffect(() => {
+    setDisplayUrl(window.location.host + window.location.pathname);
+    
+    async function fetchData(isPolling = false) {
+      try {
+        if (!isPolling) {
+          const wallRes = await fetch(`/api/walls/${slug}`);
+          if (!wallRes.ok) throw new Error("Failed to load wall");
+          const wallData = await wallRes.json();
+          setWall(wallData.wall);
+        }
+
+        const notesRes = await fetch(`/api/walls/${slug}/notes`);
+        if (notesRes.ok) {
+          const notesData = await notesRes.json();
+          
+          setNotes((prevNotes) => {
+            const existingMap = new Map(prevNotes.map(n => [n.id, n]));
+            
+            return notesData.notes.map((n: any) => {
+              if (existingMap.has(n.id)) {
+                // Preserve coordinates for existing notes so they don't jump around
+                const existing = existingMap.get(n.id)!;
+                return { ...n, x: existing.x, y: existing.y, rotate: existing.rotate };
+              } else {
+                // Assign new random coordinates for new notes
+                return {
+                  ...n,
+                  x: Math.floor(Math.random() * 70) + 10,
+                  y: Math.floor(Math.random() * 70) + 10,
+                  rotate: Math.floor(Math.random() * 10) - 5,
+                };
+              }
+            });
+          });
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (!isPolling) setLoading(false);
+      }
+    }
+    
+    // Initial fetch
+    fetchData();
+
+    // Set up polling every 5 seconds
+    const intervalId = setInterval(() => {
+      fetchData(true);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [slug]);
+
+  const handleAddNote = async () => {
+    if (!newText.trim() || !wall) return;
+
+    try {
+      const res = await fetch(`/api/walls/${slug}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: newText,
+          color: colors[selectedColor].bg,
+          isAnonymous
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Optimistically add to UI
+        const newNote = {
+          ...data.note,
+          x: Math.floor(Math.random() * 70) + 10,
+          y: Math.floor(Math.random() * 70) + 10,
+          rotate: Math.floor(Math.random() * 10) - 5,
+        };
+        setNotes([newNote, ...notes]);
+        setIsModalOpen(false);
+        setNewText("");
+        setIsAnonymous(true);
+        setSelectedColor(0);
+      }
+    } catch (error) {
+      console.error("Failed to post note", error);
+    }
+  };
+
+  const handleHeart = async (noteId: number) => {
+    // Optimistic UI update
+    setNotes(prev => prev.map(n => 
+      n.id === noteId ? { ...n, heartsCount: (n.heartsCount || 0) + 1 } : n
+    ));
+
+    try { 
+      const res = await fetch(`/api/notes/${noteId}/heart`, { method: "POST" });
+      
+      if (!res.ok) {
+        if (res.status === 401) {
+          alert("You must be logged in to appreciate notes!");
+        }
+        // Revert optimistic update on failure
+        setNotes(prev => prev.map(n => 
+          n.id === noteId ? { ...n, heartsCount: Math.max(0, (n.heartsCount || 1) - 1) } : n
+        ));
+        return;
+      }
+
+      const data = await res.json();
+      if (data.message === 'Already appreciated') {
+        // Revert optimistic update because they already liked it in the past
+        setNotes(prev => prev.map(n => 
+          n.id === noteId ? { ...n, heartsCount: Math.max(0, (n.heartsCount || 1) - 1) } : n
+        ));
+      }
+    } catch (e) { 
+      console.error(e);
+      // Revert on network error
+      setNotes(prev => prev.map(n => 
+        n.id === noteId ? { ...n, heartsCount: Math.max(0, (n.heartsCount || 1) - 1) } : n
+      ));
+    }
+  };
+
+  const getWallUrl = () => typeof window !== 'undefined' ? window.location.href : '';
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(getWallUrl());
+    alert('Link copied to clipboard!');
+  };
+
+  const handleShareLink = async () => {
+    const url = getWallUrl();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join ${wall?.title || 'this wall'}`,
+          text: wall?.description || 'Leave something behind.',
+          url,
+        });
+      } catch (err) { console.error('Share failed', err); }
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const handleSaveQR = async () => {
+    setIsGeneratingQR(true);
+    const url = getWallUrl();
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(url)}&margin=10`;
+    
+    try {
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `wall-qr-${wall?.slug || 'share'}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.error("Failed to download QR code", e);
+      alert('Failed to generate QR code');
+    } finally {
+      setIsGeneratingQR(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-gray-400" size={32} /></div>;
+  }
+
+  if (!wall) {
+    return <div className="min-h-screen flex items-center justify-center text-xl">Wall not found or private</div>;
+  }
+
+  // Split notes into two columns for mobile masonry
+  const leftColumnNotes = notes.filter((_, i) => i % 2 === 0);
+  const rightColumnNotes = notes.filter((_, i) => i % 2 !== 0);
+
+  return (
+    <div className="flex-1 flex flex-col relative min-h-screen pb-20 md:pb-0">
+      {/* Wall Header */}
+      <div className="px-4 md:px-12 py-8 max-w-7xl mx-auto w-full flex flex-col md:flex-row items-center md:items-start justify-between text-center md:text-left gap-4">
+        <div>
+          <h1 className="font-playfair text-4xl md:text-5xl font-bold mb-2 tracking-tight text-[#111]">
+            {wall.title}
+          </h1>
+          <p className="text-gray-600 text-lg md:text-xl mb-4">{wall.description}</p>
+          <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-widest">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {notes.length} notes
+          </div>
+        </div>
+        
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setIsShareModalOpen(true)}
+            className="w-12 h-12 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+          >
+            <Share size={20} className="text-gray-700" />
+          </button>
+          <button className="w-12 h-12 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <MoreHorizontal size={20} className="text-gray-700" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Canvas */}
+      <div 
+        ref={canvasRef}
+        className="hidden md:flex flex-1 relative overflow-hidden min-h-[600px] w-full items-center justify-center"
+      >
+        {notes.length === 0 ? (
+          <div className="flex flex-col items-center text-center px-4 mt-[-100px]">
+            <div className="w-48 h-48 bg-gray-100/50 rounded-2xl mb-8 flex items-center justify-center border border-gray-200 shadow-sm opacity-50 rotate-[-5deg]">
+              <div className="w-2/3 h-2 bg-gray-200 rounded-full mb-3" />
+              <div className="w-1/2 h-2 bg-gray-200 rounded-full mb-3" />
+              <div className="w-3/4 h-2 bg-gray-200 rounded-full" />
+            </div>
+            <h2 className="font-playfair text-3xl font-bold text-[#111] mb-3">This wall is waiting</h2>
+            <p className="text-gray-500 max-w-sm">Share it with someone, or leave the first thing behind.</p>
+          </div>
+        ) : (
+          notes.map((note) => (
+            <div
+              key={note.id}
+              onPointerDown={(e) => handlePointerDown(e, note)}
+              onPointerMove={(e) => handlePointerMove(e, note)}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              className={`absolute p-8 rounded-lg shadow-sm w-[320px] transition-transform cursor-grab active:cursor-grabbing ${note.color} ${dragInfo?.id === note.id ? 'z-50 scale-105' : 'hover:z-10 hover:scale-105'}`}
+              style={{
+                left: `${note.x}%`,
+                top: `${note.y}%`,
+                transform: `rotate(${dragInfo?.id === note.id ? 0 : note.rotate}deg)`,
+                touchAction: 'none' // Prevent scrolling while dragging on touch devices
+              }}
+            >
+              <p className="text-gray-900 text-lg mb-6 leading-relaxed font-medium select-none">
+                {note.text}
+              </p>
+              <div className="flex items-center justify-between select-none">
+                <span className="text-gray-500">— {note.isAnonymous ? "Anonymous" : "User"}</span>
+                <button 
+                  onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking heart
+                  onClick={() => handleHeart(note.id)} 
+                  className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors"
+                >
+                  <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span className="text-xs font-medium">{note.heartsCount || 0}</span>
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Mobile Masonry Grid */}
+      <div className="md:hidden flex-1 w-full px-4 pt-4 pb-24">
+        {notes.length === 0 ? (
+          <div className="flex flex-col items-center text-center py-20">
+            <h2 className="font-playfair text-2xl font-bold text-[#111] mb-2">This wall is waiting</h2>
+            <p className="text-gray-500">Share it with someone, or leave the first thing behind.</p>
+          </div>
+        ) : (
+          <div className="flex gap-4 items-start">
+            <div className="flex flex-col gap-4 flex-1">
+              {leftColumnNotes.map(note => (
+                <div key={note.id} className={`p-5 rounded-lg shadow-sm w-full ${note.color}`}>
+                  <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium">{note.text}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : "User"}</p>
+                    <button onClick={() => handleHeart(note.id)} className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
+                      <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      <span className="text-[10px] font-medium">{note.heartsCount || 0}</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col gap-4 flex-1">
+              {rightColumnNotes.map(note => (
+                <div key={note.id} className={`p-5 rounded-lg shadow-sm w-full ${note.color}`}>
+                  <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium">{note.text}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : "User"}</p>
+                    <button onClick={() => handleHeart(note.id)} className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
+                      <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      <span className="text-[10px] font-medium">{note.heartsCount || 0}</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Leave a Note FAB */}
+      <div className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-20">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-[#0A1118] text-white px-5 py-3.5 rounded-full font-medium flex items-center gap-2 hover:bg-black transition-colors shadow-lg"
+        >
+          <PenSquare size={18} />
+          Leave a note
+        </button>
+      </div>
+
+      <BottomNav active="my-walls" />
+
+      {/* Leave a Note Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setIsModalOpen(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative w-full max-w-md bg-transparent z-10 flex flex-col h-[90vh] md:h-auto">
+            
+            {/* Header / Instructions */}
+            <div className="text-center mb-6 pt-10 md:pt-0">
+              <h2 className="font-playfair text-2xl font-bold text-white mb-1">Leave something behind.</h2>
+              <p className="text-gray-200 text-sm md:text-base">
+                Your words will become part of the collective atelier.
+              </p>
+            </div>
+
+            {/* Note Editor */}
+            <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[300px] flex flex-col relative`}>
+              <textarea
+                value={newText}
+                onChange={(e) => setNewText(e.target.value.slice(0, 140))}
+                placeholder="Write anything..."
+                className="w-full h-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 text-lg placeholder-gray-500/70"
+                autoFocus
+              />
+              
+              <div className="flex items-end justify-between mt-4">
+                <div className="flex gap-2">
+                  {colors.map((color, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedColor(idx)}
+                      className={`w-5 h-5 rounded-full ${color.bg} border-2 ${
+                        selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
+                      } shadow-sm transition-all`}
+                      aria-label={`Select color ${idx}`}
+                    />
+                  ))}
+                </div>
+                <div className="text-gray-500/70 text-sm font-medium">
+                  {newText.length}/140
+                </div>
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="mt-4 bg-white p-4 rounded-xl shadow-lg flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900 text-sm">Post Anonymously</span>
+                <span className="text-xs text-gray-500">Hide your identity from others.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAnonymous(!isAnonymous)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  isAnonymous ? "bg-[#0A1118]" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    isAnonymous ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              onClick={handleAddNote}
+              disabled={!newText.trim()}
+              className="mt-4 bg-[#0A1118] text-white py-4 rounded-full font-medium w-full flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+              Stick it to the wall
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+
+            {/* Cancel Button */}
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="mt-4 text-white/80 font-medium py-2 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#E6E6E3] md:bg-black/40">
+          
+          {/* Mobile Header (only visible on small screens) */}
+          <div className="md:hidden flex items-center justify-between px-4 py-4 bg-transparent">
+            <button onClick={() => setIsShareModalOpen(false)} className="p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <h2 className="font-playfair text-lg font-bold">Share Modal</h2>
+            <div className="w-8 h-8 rounded-full bg-[#0A1118] text-white flex items-center justify-center">
+              <span className="text-xs font-bold">U</span>
+            </div>
+          </div>
+
+          {/* Desktop Backdrop (clicks close modal) */}
+          <div 
+            className="hidden md:block absolute inset-0 backdrop-blur-sm z-[-1]"
+            onClick={() => setIsShareModalOpen(false)}
+          />
+
+          {/* Bottom Sheet Content */}
+          <div className="mt-auto bg-white rounded-t-3xl md:rounded-3xl p-6 md:p-8 w-full md:max-w-md mx-auto md:mb-auto md:mt-24 shadow-2xl flex flex-col gap-6 relative z-10 min-h-[70vh] md:min-h-0">
+            {/* Handle */}
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-2 md:hidden" />
+            
+            <div className="flex justify-between items-start md:hidden">
+              <div />
+            </div>
+
+            {/* Header in desktop */}
+            <div className="hidden md:flex justify-between items-center mb-2">
+              <h2 className="font-playfair text-2xl font-bold">Share Modal</h2>
+              <button onClick={() => setIsShareModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div>
+              <h3 className="font-playfair text-xl font-bold text-[#111] mb-2">Invite to Wall</h3>
+              <p className="text-gray-600 text-sm">Anyone with this link can leave something behind.</p>
+            </div>
+
+            {/* Wall Graphic Placeholder */}
+            <div className="w-full aspect-square max-h-[240px] bg-[#F6F5F2] rounded-2xl flex items-center justify-center">
+              <div className="w-24 h-24 bg-white rounded-2xl shadow-sm flex items-center justify-center">
+                <LayoutGrid size={32} className="text-[#0A1118]" />
+              </div>
+            </div>
+
+            {/* Link Box */}
+            <div className="flex items-center justify-between bg-[#F6F5F2] p-2 pl-4 rounded-xl">
+              <span className="text-gray-700 text-sm font-medium truncate pr-2">
+                {displayUrl || `wall.co/atelier/${wall.slug.slice(0,6)}`}
+              </span>
+              <button 
+                onClick={handleCopyLink}
+                className="bg-[#0A1118] text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-black transition-colors shrink-0"
+              >
+                <Copy size={16} />
+                Copy
+              </button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button 
+                onClick={handleShareLink}
+                className="flex-1 bg-[#EAE9E4] text-gray-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#DFDED9] transition-colors"
+              >
+                <Share size={16} />
+                Share Link
+              </button>
+              <button 
+                onClick={handleSaveQR}
+                disabled={isGeneratingQR}
+                className="flex-1 bg-[#EAE9E4] text-gray-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#DFDED9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingQR ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                Save QR
+              </button>
+            </div>
+
+            {/* Status Footer */}
+            <div className="mt-2 flex items-center justify-center gap-2 text-sm text-gray-600 pb-4">
+              <div className="w-2 h-2 rounded-full bg-[#B5C282]" />
+              <p>Your wall currently has <span className="font-bold text-[#111]">{notes.length}</span> notes.</p>
+            </div>
+
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
