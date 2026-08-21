@@ -1,4 +1,6 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
+import 'pg';
+import 'pg-hstore';
 
 // Use DATABASE_URL from .env
 const connectionString = process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/wall';
@@ -6,6 +8,12 @@ const connectionString = process.env.DATABASE_URL || 'postgres://user:password@l
 const sequelize = new Sequelize(connectionString, {
   dialect: 'postgres',
   logging: false, // Set to console.log to see SQL queries
+  dialectOptions: process.env.NODE_ENV === 'production' ? {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  } : {}
 });
 
 // -- Define Models --
