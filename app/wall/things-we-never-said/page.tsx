@@ -1,0 +1,360 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { BottomNav } from "../../components/BottomNav";
+import { Share, PenSquare, X, Copy, Download, Loader2 } from "lucide-react";
+import Link from "next/link";
+
+type Note = {
+  id: number;
+  text: string;
+  color: string;
+  x: number;
+  y: number;
+  rotate: number;
+  isAnonymous: boolean;
+  heartsCount: number;
+};
+
+const DEMO_NOTES: Note[] = [
+  { id: 1,  text: "I never told you how proud I was when you got that job. I just couldn't find the words.", color: "bg-[#EAEAC2]", x: 5,  y: 8,  rotate: -3, isAnonymous: true,  heartsCount: 47 },
+  { id: 2,  text: "I still think about that summer every single time it rains.",                             color: "bg-[#DFE4F2]", x: 32, y: 4,  rotate: 2,  isAnonymous: true,  heartsCount: 83 },
+  { id: 3,  text: "I forgave you years ago. I just didn't know how to tell you.",                         color: "bg-[#F3CAD9]", x: 59, y: 6,  rotate: -1, isAnonymous: false, heartsCount: 112 },
+  { id: 4,  text: "You were the first person who made me feel like I wasn't too much.",                   color: "bg-[#E6E4E6]", x: 72, y: 3,  rotate: 3,  isAnonymous: true,  heartsCount: 29 },
+  { id: 5,  text: "I practiced that conversation in my head a thousand times and then never had it.",     color: "bg-[#F3CAD9]", x: 12, y: 45, rotate: -4, isAnonymous: true,  heartsCount: 61 },
+  { id: 6,  text: "Thank you for sitting with me in the silence. I needed that more than words.",         color: "bg-[#EAEAC2]", x: 40, y: 50, rotate: 1,  isAnonymous: false, heartsCount: 95 },
+  { id: 7,  text: "I was scared you'd think less of me if you knew the truth.",                          color: "bg-[#DFE4F2]", x: 65, y: 48, rotate: -2, isAnonymous: true,  heartsCount: 38 },
+  { id: 8,  text: "Every time we said goodbye I hoped you'd turn around one more time.",                  color: "bg-[#E6E4E6]", x: 20, y: 72, rotate: 4,  isAnonymous: true,  heartsCount: 74 },
+  { id: 9,  text: "I'm sorry I made you feel invisible. You were never invisible to me.",                 color: "bg-[#EAEAC2]", x: 48, y: 75, rotate: -1, isAnonymous: false, heartsCount: 201 },
+  { id: 10, text: "I kept the voicemail. I still listen to it sometimes.",                               color: "bg-[#F3CAD9]", x: 75, y: 70, rotate: 3,  isAnonymous: true,  heartsCount: 56 },
+];
+
+export default function ThingsWeNeverSaidPage() {
+  const [notes, setNotes] = useState<Note[]>(DEMO_NOTES);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newText, setNewText] = useState("");
+  const [selectedColor, setSelectedColor] = useState(0);
+  const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [dragInfo, setDragInfo] = useState<{ id: number; startX: number; startY: number; initX: number; initY: number } | null>(null);
+
+  const colors = [
+    { bg: "bg-[#EAEAC2]" },
+    { bg: "bg-[#DFE4F2]" },
+    { bg: "bg-[#F3CAD9]" },
+    { bg: "bg-[#E6E4E6]" },
+  ];
+
+  const handlePointerDown = (e: React.PointerEvent, note: Note) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const target = e.currentTarget as HTMLElement;
+    target.setPointerCapture(e.pointerId);
+    setDragInfo({ id: note.id, startX: e.clientX, startY: e.clientY, initX: note.x, initY: note.y });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent, note: Note) => {
+    if (!dragInfo || dragInfo.id !== note.id || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const deltaX = ((e.clientX - dragInfo.startX) / rect.width) * 100;
+    const deltaY = ((e.clientY - dragInfo.startY) / rect.height) * 100;
+    setNotes(prev => prev.map(n =>
+      n.id === note.id ? { ...n, x: dragInfo.initX + deltaX, y: dragInfo.initY + deltaY } : n
+    ));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!dragInfo) return;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    setDragInfo(null);
+  };
+
+  const handleHeart = (noteId: number) => {
+    setNotes(prev => prev.map(n =>
+      n.id === noteId ? { ...n, heartsCount: n.heartsCount + 1 } : n
+    ));
+  };
+
+  const handleAddNote = () => {
+    if (!newText.trim()) return;
+    const nextId = Math.max(...notes.map(n => n.id)) + 1;
+    const newNote: Note = {
+      id: nextId,
+      text: newText,
+      color: colors[selectedColor].bg,
+      x: Math.floor(Math.random() * 60) + 10,
+      y: Math.floor(Math.random() * 60) + 10,
+      rotate: Math.floor(Math.random() * 10) - 5,
+      isAnonymous: true,
+      heartsCount: 0,
+    };
+    setNotes(prev => [newNote, ...prev]);
+    setNewText("");
+    setSelectedColor(0);
+    setIsModalOpen(false);
+  };
+
+  const wallUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(wallUrl);
+    alert('Link copied!');
+  };
+
+  const handleShareLink = async () => {
+    if (navigator.share) {
+      await navigator.share({ title: 'Things We Never Said', url: wallUrl });
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const handleSaveQR = async () => {
+    setIsGeneratingQR(true);
+    try {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(wallUrl)}&margin=10`;
+      const response = await fetch(qrUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `wall-qr-things-we-never-said.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } finally {
+      setIsGeneratingQR(false);
+    }
+  };
+
+  const leftColumnNotes = notes.filter((_, i) => i % 2 === 0);
+  const rightColumnNotes = notes.filter((_, i) => i % 2 !== 0);
+
+  return (
+    <div className="flex-1 flex flex-col relative min-h-screen pb-20 md:pb-0">
+
+      {/* Demo Banner */}
+      <div className="bg-[#0A1118] text-white text-xs text-center py-2 px-4 flex items-center justify-center gap-3">
+        <span className="opacity-70">✦ This is a demo wall.</span>
+        <Link href="/create" className="underline font-semibold hover:opacity-80 transition-opacity">
+          Create your own →
+        </Link>
+      </div>
+
+      {/* Wall Header */}
+      <div className="px-4 md:px-12 py-8 max-w-7xl mx-auto w-full flex flex-col md:flex-row items-center md:items-start justify-between text-center md:text-left gap-4">
+        <div>
+          <h1 className="font-playfair text-4xl md:text-5xl font-bold mb-2 tracking-tight text-[#111]">
+            Things We Never Said.
+          </h1>
+          <p className="text-gray-600 text-lg md:text-xl mb-4">
+            A quiet place for the words that never made it out.
+          </p>
+          <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-widest">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            {notes.length} notes
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsShareModalOpen(true)}
+            className="w-12 h-12 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+          >
+            <Share size={20} className="text-gray-700" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Canvas */}
+      <div
+        ref={canvasRef}
+        className="hidden md:flex flex-1 relative overflow-hidden min-h-[600px] w-full"
+      >
+        {notes.map((note) => (
+          <div
+            key={note.id}
+            onPointerDown={(e) => handlePointerDown(e, note)}
+            onPointerMove={(e) => handlePointerMove(e, note)}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className={`absolute p-8 rounded-lg shadow-sm w-[300px] cursor-grab active:cursor-grabbing ${note.color} ${dragInfo?.id === note.id ? 'z-50 scale-105' : 'hover:z-10 hover:scale-105'} transition-transform`}
+            style={{
+              left: `${note.x}%`,
+              top: `${note.y}%`,
+              transform: `rotate(${dragInfo?.id === note.id ? 0 : note.rotate}deg)`,
+              touchAction: 'none',
+            }}
+          >
+            <p className="text-gray-900 text-base mb-6 leading-relaxed font-medium select-none">
+              {note.text}
+            </p>
+            <div className="flex items-center justify-between select-none">
+              <span className="text-gray-500 text-sm">— {note.isAnonymous ? "Anonymous" : "Someone"}</span>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => handleHeart(note.id)}
+                className="flex items-center gap-1 text-gray-500 hover:text-red-400 transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0" className="w-4 h-4 text-red-400/60 hover:text-red-400">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span className="text-xs font-medium">{note.heartsCount}</span>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mobile Masonry Grid */}
+      <div className="md:hidden flex-1 w-full px-4 pt-4 pb-28">
+        <div className="flex gap-4 items-start">
+          <div className="flex flex-col gap-4 flex-1">
+            {leftColumnNotes.map(note => (
+              <div key={note.id} className={`p-5 rounded-lg shadow-sm w-full ${note.color}`}>
+                <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium">{note.text}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-gray-500 text-xs">— Anonymous</p>
+                  <button onClick={() => handleHeart(note.id)} className="flex items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span className="text-[10px] font-medium">{note.heartsCount}</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-col gap-4 flex-1">
+            {rightColumnNotes.map(note => (
+              <div key={note.id} className={`p-5 rounded-lg shadow-sm w-full ${note.color}`}>
+                <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium">{note.text}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-gray-500 text-xs">— Anonymous</p>
+                  <button onClick={() => handleHeart(note.id)} className="flex items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span className="text-[10px] font-medium">{note.heartsCount}</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Leave a Note FAB */}
+      <div className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-20">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-[#0A1118] text-white px-5 py-3.5 rounded-full font-medium flex items-center gap-2 hover:bg-black transition-colors shadow-lg"
+        >
+          <PenSquare size={18} />
+          Leave a note
+        </button>
+      </div>
+
+      <BottomNav active="" />
+
+      {/* Leave a Note Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          <div className="relative w-full max-w-md bg-transparent z-10 flex flex-col h-[90vh] md:h-auto">
+            <div className="text-center mb-6 pt-10 md:pt-0">
+              <h2 className="font-playfair text-2xl font-bold text-white mb-1">Leave something behind.</h2>
+              <p className="text-gray-200 text-sm">Your words join this collective wall.</p>
+            </div>
+
+            <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[260px] flex flex-col`}>
+              <textarea
+                value={newText}
+                onChange={(e) => setNewText(e.target.value.slice(0, 140))}
+                placeholder="Write anything..."
+                className="w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 text-lg placeholder-gray-500/70"
+                autoFocus
+              />
+              <div className="flex items-end justify-between mt-4">
+                <div className="flex gap-2">
+                  {colors.map((color, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedColor(idx)}
+                      className={`w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all`}
+                    />
+                  ))}
+                </div>
+                <span className="text-gray-500/70 text-sm">{newText.length}/140</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleAddNote}
+              disabled={!newText.trim()}
+              className="mt-4 bg-[#0A1118] text-white py-4 rounded-full font-medium w-full flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-50 shadow-lg"
+            >
+              Stick it to the wall
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+            <button onClick={() => setIsModalOpen(false)} className="mt-4 text-white/80 font-medium py-2 hover:text-white">Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#E6E6E3] md:bg-black/40">
+          <div className="md:hidden flex items-center justify-between px-4 py-4">
+            <button onClick={() => setIsShareModalOpen(false)} className="p-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <h2 className="font-playfair text-lg font-bold">Share Wall</h2>
+            <div className="w-8" />
+          </div>
+
+          <div className="hidden md:block absolute inset-0 backdrop-blur-sm" onClick={() => setIsShareModalOpen(false)} />
+
+          <div className="mt-auto bg-white rounded-t-3xl md:rounded-3xl p-6 md:p-8 w-full md:max-w-md mx-auto md:mb-auto md:mt-24 shadow-2xl flex flex-col gap-6 relative z-10 min-h-[60vh] md:min-h-0">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto md:hidden" />
+            <div className="hidden md:flex justify-between items-center">
+              <h2 className="font-playfair text-2xl font-bold">Share Wall</h2>
+              <button onClick={() => setIsShareModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+            </div>
+
+            <div>
+              <h3 className="font-playfair text-xl font-bold text-[#111] mb-1">Things We Never Said</h3>
+              <p className="text-gray-600 text-sm">Share this wall with someone who needs to read these words.</p>
+            </div>
+
+            <div className="flex items-center justify-between bg-[#F6F5F2] p-2 pl-4 rounded-xl">
+              <span className="text-gray-700 text-sm font-medium truncate pr-2">{typeof window !== 'undefined' ? window.location.host + window.location.pathname : ''}</span>
+              <button onClick={handleCopyLink} className="bg-[#0A1118] text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 hover:bg-black transition-colors shrink-0">
+                <Copy size={16} />Copy
+              </button>
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={handleShareLink} className="flex-1 bg-[#EAE9E4] text-gray-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#DFDED9] transition-colors">
+                <Share size={16} />Share Link
+              </button>
+              <button onClick={handleSaveQR} disabled={isGeneratingQR} className="flex-1 bg-[#EAE9E4] text-gray-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#DFDED9] transition-colors disabled:opacity-50">
+                {isGeneratingQR ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}Save QR
+              </button>
+            </div>
+
+            <div className="mt-auto text-center">
+              <Link href="/create" className="text-sm font-semibold text-[#0A1118] underline hover:opacity-70 transition-opacity">
+                Create your own wall →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
