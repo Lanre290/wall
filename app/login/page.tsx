@@ -193,15 +193,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Leave a Note FAB (only on mobile) */}
-      <div className="md:hidden fixed bottom-28 right-1/2 translate-x-1/2 z-20 w-[90%] max-w-sm">
-        <button
-          className="w-full bg-[#0A1118] text-white py-4 rounded-full font-medium flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-lg"
-        >
-          <PenSquare size={18} />
-          LEAVE A NOTE
-        </button>
-      </div>
+
 
       <BottomNav active="account" />
       {renderModal()}
