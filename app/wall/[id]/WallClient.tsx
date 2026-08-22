@@ -29,6 +29,8 @@ export default function WallClient({ slug }: { slug: string }) {
   const [wall, setWall] = useState<WallData | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isCreator, setIsCreator] = useState(false);
+  const [submitted, setSubmitted] = useState(false); // for private inbox confirmation
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -69,10 +71,10 @@ export default function WallClient({ slug }: { slug: string }) {
   };
 
   const colors = [
-    { bg: "bg-[#EAEAC2]", dot: "bg-[#D1D19C]" }, // Yellowish
-    { bg: "bg-[#DFE4F2]", dot: "bg-[#B5C2DC]" }, // Bluish
-    { bg: "bg-[#F3CAD9]", dot: "bg-[#D6A1B6]" }, // Pinkish
-    { bg: "bg-[#E6E4E6]", dot: "bg-[#C4B7D2]" }, // Grey/Purple
+    { bg: "bg-[#EAEAC2]", dot: "bg-[#D1D19C]" },
+    { bg: "bg-[#DFE4F2]", dot: "bg-[#B5C2DC]" },
+    { bg: "bg-[#F3CAD9]", dot: "bg-[#D6A1B6]" },
+    { bg: "bg-[#E6E4E6]", dot: "bg-[#C4B7D2]" },
   ];
 
   useEffect(() => {
@@ -85,6 +87,14 @@ export default function WallClient({ slug }: { slug: string }) {
           if (!wallRes.ok) throw new Error("Failed to load wall");
           const wallData = await wallRes.json();
           setWall(wallData.wall);
+          setIsCreator(wallData.isCreator);
+
+          // If private wall and not the creator, open the inbox modal immediately
+          if (wallData.wall.privacy === 'PRIVATE' && !wallData.isCreator) {
+            setIsModalOpen(true);
+            setLoading(false);
+            return; // Don't fetch notes for visitors of private walls
+          }
         }
 
         const notesRes = await fetch(`/api/walls/${slug}/notes`);
@@ -96,11 +106,9 @@ export default function WallClient({ slug }: { slug: string }) {
             
             return notesData.notes.map((n: any) => {
               if (existingMap.has(n.id)) {
-                // Preserve coordinates for existing notes so they don't jump around
                 const existing = existingMap.get(n.id)!;
                 return { ...n, x: existing.x, y: existing.y, rotate: existing.rotate };
               } else {
-                // Assign new random coordinates for new notes
                 return {
                   ...n,
                   x: Math.floor(Math.random() * 70) + 10,
@@ -118,10 +126,8 @@ export default function WallClient({ slug }: { slug: string }) {
       }
     }
     
-    // Initial fetch
     fetchData();
 
-    // Set up polling every 5 seconds
     const intervalId = setInterval(() => {
       fetchData(true);
     }, 5000);
@@ -145,15 +151,22 @@ export default function WallClient({ slug }: { slug: string }) {
 
       if (res.ok) {
         const data = await res.json();
-        // Optimistically add to UI
-        const newNote = {
-          ...data.note,
-          x: Math.floor(Math.random() * 70) + 10,
-          y: Math.floor(Math.random() * 70) + 10,
-          rotate: Math.floor(Math.random() * 10) - 5,
-        };
-        setNotes([newNote, ...notes]);
-        setIsModalOpen(false);
+        const isPrivateVisitor = wall.privacy === 'PRIVATE' && !isCreator;
+
+        if (isPrivateVisitor) {
+          // Show a thank-you confirmation instead of adding to canvas
+          setSubmitted(true);
+          setIsModalOpen(false);
+        } else {
+          const newNote = {
+            ...data.note,
+            x: Math.floor(Math.random() * 70) + 10,
+            y: Math.floor(Math.random() * 70) + 10,
+            rotate: Math.floor(Math.random() * 10) - 5,
+          };
+          setNotes([newNote, ...notes]);
+          setIsModalOpen(false);
+        }
         setNewText("");
         setIsAnonymous(true);
         setSelectedColor(0);
@@ -252,7 +265,95 @@ export default function WallClient({ slug }: { slug: string }) {
   }
 
   if (!wall) {
-    return <div className="min-h-screen flex items-center justify-center text-xl">Wall not found or private</div>;
+    return <div className="min-h-screen flex items-center justify-center text-xl">Wall not found</div>;
+  }
+
+  // --- Private wall visitor: inbox mode ---
+  const isPrivateVisitor = wall.privacy === 'PRIVATE' && !isCreator;
+
+  if (isPrivateVisitor && submitted) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#EAEAC2] flex items-center justify-center mb-6 text-2xl">✦</div>
+        <h2 className="font-playfair text-3xl font-bold text-[#111] mb-3">Left behind.</h2>
+        <p className="text-gray-600 max-w-xs leading-relaxed">
+          Your message has been tucked safely onto their wall. Only they can read it.
+        </p>
+        <button
+          onClick={() => { setSubmitted(false); setIsModalOpen(true); }}
+          className="mt-8 text-sm text-gray-500 underline hover:text-gray-800"
+        >
+          Leave another message
+        </button>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (isPrivateVisitor) {
+    // Show a minimal inbox prompt page — modal is already auto-opened via useEffect
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#F3CAD9] flex items-center justify-center mb-6 text-2xl">✉</div>
+        <h2 className="font-playfair text-3xl font-bold text-[#111] mb-3">{wall.title}</h2>
+        <p className="text-gray-600 max-w-xs leading-relaxed mb-8">
+          {wall.description || "Leave something behind. Only the creator will see it."}
+        </p>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-[#0A1118] text-white px-8 py-3.5 rounded-full font-medium hover:bg-black transition-colors"
+        >
+          Leave a message
+        </button>
+
+        <BottomNav />
+
+        {/* Note Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="relative w-full max-w-md bg-transparent z-10 flex flex-col h-[90vh] md:h-auto">
+              <div className="text-center mb-6 pt-10 md:pt-0">
+                <h2 className="font-playfair text-2xl font-bold text-white mb-1">Leave something behind.</h2>
+                <p className="text-gray-200 text-sm">Only {wall.title} will see this.</p>
+              </div>
+
+              <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[260px] flex flex-col`}>
+                <textarea
+                  value={newText}
+                  onChange={(e) => setNewText(e.target.value.slice(0, 140))}
+                  placeholder="Write anything..."
+                  className="w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 text-lg placeholder-gray-500/70"
+                  autoFocus
+                />
+                <div className="flex items-end justify-between mt-4">
+                  <div className="flex gap-2">
+                    {colors.map((color, idx) => (
+                      <button key={idx} onClick={() => setSelectedColor(idx)}
+                        className={`w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-gray-500/70 text-sm">{newText.length}/140</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleAddNote}
+                disabled={!newText.trim()}
+                className="mt-4 bg-[#0A1118] text-white py-4 rounded-full font-medium w-full flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-50 shadow-lg"
+              >
+                Send it
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </button>
+              <button onClick={() => setIsModalOpen(false)} className="mt-4 text-white/80 font-medium py-2 hover:text-white">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
   // Split notes into two columns for mobile masonry

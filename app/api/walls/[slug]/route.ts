@@ -18,15 +18,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       return NextResponse.json({ error: 'Wall not found' }, { status: 404 });
     }
 
-    // Optional privacy check: if PRIVATE, check if user is creator
-    if (wall.getDataValue('privacy') === 'PRIVATE') {
-      const session = await getSessionUser();
-      if (!session || session.userId !== wall.getDataValue('creatorId')) {
-        return NextResponse.json({ error: 'Unauthorized to view this wall' }, { status: 403 });
-      }
-    }
+    // Always resolve session to determine creator status
+    const session = await getSessionUser();
+    const isCreator = !!(session && session.userId === wall.getDataValue('creatorId'));
 
-    return NextResponse.json({ wall });
+    return NextResponse.json({ wall, isCreator });
   } catch (error) {
     console.error('GET wall error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
