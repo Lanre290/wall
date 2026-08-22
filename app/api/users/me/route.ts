@@ -42,3 +42,31 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const session = await getSessionUser();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = await User.findByPk(session.userId);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const body = await req.json();
+    const { name, bio, tags } = body;
+
+    await user.update({
+      name: name !== undefined ? name.trim() : user.getDataValue('name'),
+      bio: bio !== undefined ? bio.trim() : user.getDataValue('bio'),
+      tags: tags !== undefined ? tags : user.getDataValue('tags'),
+    });
+
+    return NextResponse.json({ user });
+  } catch (error) {
+    console.error('PATCH user error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

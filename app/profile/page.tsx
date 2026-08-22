@@ -14,6 +14,9 @@ export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', bio: '', tagsInput: '' });
 
   useEffect(() => {
     async function loadProfile() {
@@ -22,6 +25,11 @@ export default function ProfilePage() {
         if (res.ok) {
           const data = await res.json();
           setProfile(data);
+          setEditForm({
+            name: data.user.name || '',
+            bio: data.user.bio || '',
+            tagsInput: (data.user.tags || []).join(', '),
+          });
         } else if (res.status === 401) {
           router.push("/login");
         }
@@ -34,9 +42,33 @@ export default function ProfilePage() {
     loadProfile();
   }, [router]);
 
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const tags = editForm.tagsInput
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
+
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editForm.name, bio: editForm.bio, tags }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setProfile((prev: any) => ({ ...prev, user: data.user }));
+        setIsEditing(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleLogout = () => {
-    // In a real app you'd hit a logout endpoint to clear the HTTP-only cookie
-    // For now we can just redirect to clear state
     document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     router.push('/login');
   };
@@ -173,7 +205,10 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <button className="w-full bg-[#0A1118] text-white py-3.5 rounded-full text-sm font-semibold hover:bg-black transition-colors mb-8 shadow-sm">
+          <button 
+            onClick={() => setIsEditing(true)}
+            className="w-full bg-[#0A1118] text-white py-3.5 rounded-full text-sm font-semibold hover:bg-black transition-colors mb-8 shadow-sm"
+          >
             Edit Profile
           </button>
 
@@ -217,6 +252,63 @@ export default function ProfilePage() {
       </div>
 
       <BottomNav active="account" />
+
+      {/* Edit Profile Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditing(false)} />
+          <div className="relative bg-white rounded-t-3xl md:rounded-3xl p-6 md:p-10 w-full md:max-w-lg mx-auto shadow-2xl z-10">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 md:hidden" />
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-playfair text-2xl font-bold text-[#111]">Edit Profile</h2>
+              <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <span className="text-xl leading-none">✕</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full bg-[#F6F5F2] rounded-xl px-4 py-3 text-sm font-medium text-[#111] outline-none focus:ring-2 focus:ring-[#0A1118]/20"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Bio</label>
+                <textarea
+                  value={editForm.bio}
+                  onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))}
+                  rows={3}
+                  className="w-full bg-[#F6F5F2] rounded-xl px-4 py-3 text-sm font-medium text-[#111] outline-none focus:ring-2 focus:ring-[#0A1118]/20 resize-none"
+                  placeholder="Tell us a bit about yourself..."
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Tags <span className="normal-case font-normal">(comma separated)</span></label>
+                <input
+                  type="text"
+                  value={editForm.tagsInput}
+                  onChange={e => setEditForm(f => ({ ...f, tagsInput: e.target.value }))}
+                  placeholder="Design, Curation, Art..."
+                  className="w-full bg-[#F6F5F2] rounded-xl px-4 py-3 text-sm font-medium text-[#111] outline-none focus:ring-2 focus:ring-[#0A1118]/20"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleSave}
+              disabled={isSaving || !editForm.name.trim()}
+              className="mt-6 w-full bg-[#0A1118] text-white py-3.5 rounded-full text-sm font-semibold hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isSaving ? <Loader2 size={16} className="animate-spin" /> : null}
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
