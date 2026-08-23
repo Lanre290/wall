@@ -207,7 +207,7 @@ export default function ThingsWeNeverSaidPage() {
               touchAction: 'none',
             }}
           >
-            <p className={`text-gray-900 mb-6 leading-relaxed select-none ${getHandwritingClass(note.id, 'lg')}`}>
+            <p className={`text-gray-900 mb-6 leading-relaxed select-none ${getHandwritingClass(note.font, 'lg')}`}>
               {note.text}
             </p>
             <div className="flex items-center justify-between select-none">
@@ -237,7 +237,7 @@ export default function ThingsWeNeverSaidPage() {
                 onClick={() => setSelectedNote(note)}
                 className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
               >
-                <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.id, 'sm')}`}>{note.text}</p>
+                <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
                 <div className="flex items-center justify-between">
                   <p className="text-gray-500 text-xs">— Anonymous</p>
                   <div className="flex items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors">
@@ -257,7 +257,7 @@ export default function ThingsWeNeverSaidPage() {
                 onClick={() => setSelectedNote(note)}
                 className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
               >
-                <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.id, 'sm')}`}>{note.text}</p>
+                <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
                 <div className="flex items-center justify-between">
                   <p className="text-gray-500 text-xs">— Anonymous</p>
                   <div className="flex items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors">
@@ -292,7 +292,7 @@ export default function ThingsWeNeverSaidPage() {
 
             {/* Note content */}
             <div className="flex-1 flex flex-col justify-center px-8 pb-8">
-              <p className={`text-gray-900 leading-relaxed mb-10 ${getHandwritingClass(selectedNote.id, 'xl')}`}>
+              <p className={`text-gray-900 leading-relaxed mb-10 ${getHandwritingClass(selectedNote.font, 'xl')}`}>
                 {selectedNote.text}
               </p>
               <p className="text-gray-600 text-base font-sans">
