@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+// import { WallOfFame } from "./components/WallOfFame";
 
 export default function LandingPage() {
   return (
@@ -181,6 +182,9 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
+
+      {/* Wall of Fame (Note Showcase) - Interactive Client Component */}
+      {/* <WallOfFame /> */}
     </div>
   );
 }
