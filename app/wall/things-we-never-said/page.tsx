@@ -274,7 +274,7 @@ export default function ThingsWeNeverSaidPage() {
             <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[260px] flex flex-col`}>
               <textarea
                 value={newText}
-                onChange={(e) => setNewText(e.target.value.slice(0, 140))}
+                onChange={(e) => setNewText(e.target.value.slice(0, 300))}
                 placeholder="Write anything..."
                 className="w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 text-lg placeholder-gray-500/70"
                 autoFocus
@@ -289,7 +289,7 @@ export default function ThingsWeNeverSaidPage() {
                     />
                   ))}
                 </div>
-                <span className="text-gray-500/70 text-sm">{newText.length}/140</span>
+                <span className="text-gray-500/70 text-sm">{newText.length}/300</span>
               </div>
             </div>
 

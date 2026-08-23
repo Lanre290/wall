@@ -69,8 +69,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     const body = await req.json();
     const { text, color, isAnonymous } = body;
 
-    if (!text || text.length > 140) {
-      return NextResponse.json({ error: 'Text is required and must be under 140 characters' }, { status: 400 });
+    if (!text || text.length > 300) {
+      return NextResponse.json({ error: 'Text is required and must be under 300 characters' }, { status: 400 });
     }
 
     const session = await getSessionUser();

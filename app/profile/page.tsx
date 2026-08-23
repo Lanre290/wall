@@ -91,7 +91,7 @@ export default function ProfilePage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="font-playfair text-2xl font-bold text-[#111]">Profile</h1>
           <div className="flex gap-4 items-center text-[#111]">
-            <button><Settings size={22} /></button>
+            <button onClick={() => setIsEditing(true)}><Settings size={22} /></button>
             <div className="w-8 h-8 rounded-full bg-[#0A1118] text-white flex items-center justify-center">
               <User size={16} />
             </div>
@@ -104,11 +104,14 @@ export default function ProfilePage() {
             <div className="w-28 h-28 rounded-full overflow-hidden shadow-sm relative">
               <img 
                 src={profileImage} 
-                alt="Sarah Jenkins" 
+                alt={user.name}
                 className="object-cover w-full h-full" 
               />
             </div>
-            <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#0A1118] text-white rounded-full flex items-center justify-center border-2 border-[#FAF9F6] shadow-sm">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="absolute bottom-0 right-0 w-8 h-8 bg-[#0A1118] text-white rounded-full flex items-center justify-center border-2 border-[#FAF9F6] shadow-sm"
+            >
               <Pencil size={14} />
             </button>
           </div>
@@ -142,11 +145,14 @@ export default function ProfilePage() {
 
         {/* Mobile Settings List */}
         <div className="bg-[#F3F2EE] rounded-2xl p-2 mb-8">
-          <Link href="#" className="flex items-center gap-4 p-4 border-b border-gray-200/50">
+          <button
+            onClick={() => setIsEditing(true)}
+            className="flex items-center gap-4 p-4 border-b border-gray-200/50 w-full text-left"
+          >
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-sm"><UserCog size={16} /></div>
-            <span className="font-medium text-[#111] flex-1 text-sm">Account Settings</span>
+            <span className="font-medium text-[#111] flex-1 text-sm">Edit Profile</span>
             <ChevronRight size={16} className="text-gray-400" />
-          </Link>
+          </button>
           <Link href="#" className="flex items-center gap-4 p-4 border-b border-gray-200/50">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-sm"><Shield size={16} /></div>
             <span className="font-medium text-[#111] flex-1 text-sm">Privacy Preferences</span>
