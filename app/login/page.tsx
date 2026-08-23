@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { BottomNav } from "../components/BottomNav";
 import { Bell, LayoutGrid, PenSquare, X } from "lucide-react";
+import Link from "next/link";
 import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
-  const [modalContent, setModalContent] = useState<"terms" | "privacy" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const login = useGoogleLogin({
@@ -46,129 +46,7 @@ export default function LoginPage() {
     }
   });
 
-  const renderModal = () => {
-    if (!modalContent) return null;
 
-    const isTerms = modalContent === "terms";
-    const title = isTerms ? "Terms of Service" : "Privacy Policy";
-    const content = isTerms ? (
-      <>
-        <h3 className="font-playfair text-lg font-bold mb-2">1. What Wall Is</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          Wall is a collaborative space where people can create walls and leave anonymous or named sticky notes on them. It is built for connection, memory, and expression — not for commercial data harvesting.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">2. Your Notes</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          You own what you write. By posting a note, you grant Wall a limited licence to display it on the wall it was posted to. We do not sell, license, or redistribute your content to third parties.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">3. Acceptable Use</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          You agree not to post content that is abusive, hateful, threatening, sexually explicit, or otherwise harmful. Wall reserves the right to remove any content that violates these guidelines without prior notice.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">4. Anonymous Notes</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          When you post anonymously, your name is not displayed. However, your account ID is still stored internally and may be used to moderate harmful content if necessary.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">5. Wall Creators</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          If you create a wall, you are responsible for the content posted on it. You may set a wall to Private or Public at any time. Deleting a wall permanently removes all associated notes.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">6. Changes</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          We may update these terms as Wall evolves. Continued use of the platform means you accept any updated terms.
-        </p>
-      </>
-    ) : (
-      <>
-        <h3 className="font-playfair text-lg font-bold mb-2">1. What We Collect</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          When you sign in with Google, we receive your name, email address, and profile picture from Google. We store these to create and identify your account. We do not receive your Google password.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">2. What We Store</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          We store the walls you create, the notes you leave (including whether they were posted anonymously), and hearts (appreciations) you give. This data is stored securely in a private database.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">3. How We Use It</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          Your data is used solely to run Wall — to show your walls, your notes, and your profile stats. We do not run ads, sell your data, or share it with third parties.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">4. Sessions & Cookies</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          We use a single secure HTTP-only cookie to keep you logged in. It expires after 7 days. No tracking cookies or analytics are used.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">5. Deleting Your Data</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          You can request full deletion of your account and all associated data at any time by contacting us. Walls and notes you created will be permanently removed.
-        </p>
-
-        <h3 className="font-playfair text-lg font-bold mb-2">6. Contact</h3>
-        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
-          For any privacy concerns, reach out via the contact link in the app. We take these requests seriously and respond within a reasonable time.
-        </p>
-      </>
-    );
-
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#E6E6E3] md:bg-black/40">
-        
-        {/* Mobile Header */}
-        <div className="md:hidden flex w-full items-center justify-between px-4 py-4 bg-transparent">
-          <button onClick={() => setModalContent(null)} className="p-2">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
-          <h2 className="font-playfair text-lg font-bold">{title}</h2>
-          <div className="w-8 h-8 rounded-full bg-transparent flex items-center justify-center">
-            {/* Empty space for balance */}
-          </div>
-        </div>
-
-        {/* Desktop Backdrop */}
-        <div 
-          className="hidden md:block absolute inset-0 backdrop-blur-sm z-[-1]"
-          onClick={() => setModalContent(null)}
-        />
-
-        {/* Modal Container */}
-        <div className="mt-auto md:mt-0 bg-white rounded-t-3xl md:rounded-3xl p-6 md:p-10 w-full md:max-w-xl mx-auto shadow-2xl flex flex-col relative z-10 min-h-[70vh] md:min-h-0 max-h-[90vh]">
-          {/* Handle */}
-          <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 md:hidden" />
-          
-          {/* Desktop Header */}
-          <div className="hidden md:flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
-            <h2 className="font-playfair text-3xl font-bold">{title}</h2>
-            <button onClick={() => setModalContent(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="overflow-y-auto pr-2 pb-8 flex-1">
-            {content}
-            <div className="mt-8 bg-[#F6F5F2] p-4 rounded-xl">
-              <p className="text-xs text-gray-500 text-center">
-                Last updated: August 2026. For full details, please contact our legal team.
-              </p>
-            </div>
-          </div>
-          
-          <button 
-            onClick={() => setModalContent(null)}
-            className="md:hidden mt-auto w-full bg-[#0A1118] text-white py-4 rounded-full font-medium"
-          >
-            Accept & Close
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="flex-1 flex flex-col relative h-[80vh] md:h-auto">
@@ -220,7 +98,7 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-8 text-xs text-gray-500 max-w-[250px] leading-relaxed">
-            By continuing, you agree to our <button onClick={() => setModalContent("terms")} className="underline hover:text-gray-800">Terms of Service</button> and <button onClick={() => setModalContent("privacy")} className="underline hover:text-gray-800">Privacy Policy</button>.
+            By continuing, you agree to our <Link href="/terms" target="_blank" className="underline hover:text-gray-800">Terms of Service</Link> and <Link href="/privacy" target="_blank" className="underline hover:text-gray-800">Privacy Policy</Link>.
           </p>
         </div>
       </div>
@@ -228,7 +106,6 @@ export default function LoginPage() {
 
 
       <BottomNav active="account" />
-      {renderModal()}
     </div>
   );
 }

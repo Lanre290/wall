@@ -24,7 +24,7 @@ export async function Footer() {
             </Link>
           )}
           <Link href="#" className="hover:text-black transition-colors">Terms</Link>
-          <Link href="#" className="hover:text-black transition-colors">Privacy</Link>
+          <Link href="/privacy" className="hover:text-black transition-colors">Privacy</Link>
         </div>
       </div>
     </footer>
