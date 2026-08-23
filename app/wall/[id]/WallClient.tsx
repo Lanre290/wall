@@ -135,8 +135,11 @@ export default function WallClient({ slug }: { slug: string }) {
     return () => clearInterval(intervalId);
   }, [slug]);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleAddNote = async () => {
-    if (!newText.trim() || !wall) return;
+    if (!newText.trim() || !wall || isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       const res = await fetch(`/api/walls/${slug}/notes`, {
@@ -154,7 +157,6 @@ export default function WallClient({ slug }: { slug: string }) {
         const isPrivateVisitor = wall.privacy === 'PRIVATE' && !isCreator;
 
         if (isPrivateVisitor) {
-          // Show a thank-you confirmation instead of adding to canvas
           setSubmitted(true);
           setIsModalOpen(false);
         } else {
@@ -164,7 +166,7 @@ export default function WallClient({ slug }: { slug: string }) {
             y: Math.floor(Math.random() * 70) + 10,
             rotate: Math.floor(Math.random() * 10) - 5,
           };
-          setNotes([newNote, ...notes]);
+          setNotes(prev => [newNote, ...prev]);
           setIsModalOpen(false);
         }
         setNewText("");
@@ -173,6 +175,8 @@ export default function WallClient({ slug }: { slug: string }) {
       }
     } catch (error) {
       console.error("Failed to post note", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -571,11 +575,14 @@ export default function WallClient({ slug }: { slug: string }) {
             {/* Submit Button */}
             <button
               onClick={handleAddNote}
-              disabled={!newText.trim()}
+              disabled={!newText.trim() || isSubmitting}
               className="mt-4 bg-[#0A1118] text-white py-4 rounded-full font-medium w-full flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
-              Stick it to the wall
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              {isSubmitting ? (
+                <><Loader2 size={18} className="animate-spin" /> Posting...</>
+              ) : (
+                <>Stick it to the wall <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></>
+              )}
             </button>
 
             {/* Cancel Button */}
