@@ -5,7 +5,7 @@ import { BottomNav } from "../components/BottomNav";
 import { 
   Settings, User, Pencil, Heart, FileText, Compass, 
   UserCog, Shield, HelpCircle, ChevronRight, LogOut, 
-  Link2, Mail, Share2, Loader2 
+  Link2, Mail, Share2, Loader2, Sparkles 
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -158,6 +158,11 @@ export default function ProfilePage() {
             <span className="font-medium text-[#111] flex-1 text-sm">Edit Profile</span>
             <ChevronRight size={16} className="text-gray-400" />
           </button>
+          <Link href="/pro" className="flex items-center gap-4 p-4 border-b border-gray-200/50">
+            <div className="w-8 h-8 bg-[#0A1118] text-white rounded-full flex items-center justify-center shadow-sm"><Sparkles size={16} /></div>
+            <span className="font-medium text-[#111] flex-1 text-sm">Upgrade to Pro</span>
+            <ChevronRight size={16} className="text-gray-400" />
+          </Link>
           <Link href="#" className="flex items-center gap-4 p-4 border-b border-gray-200/50">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-sm"><Shield size={16} /></div>
             <span className="font-medium text-[#111] flex-1 text-sm">Privacy Preferences</span>
@@ -218,10 +223,17 @@ export default function ProfilePage() {
 
           <button 
             onClick={() => setIsEditing(true)}
-            className="w-full bg-[#0A1118] text-white py-3.5 rounded-full text-sm font-semibold hover:bg-black transition-colors mb-8 shadow-sm"
+            className="w-full bg-[#0A1118] text-white py-3.5 rounded-full text-sm font-semibold hover:bg-black transition-colors mb-3 shadow-sm"
           >
             Edit Profile
           </button>
+
+          <Link 
+            href="/pro"
+            className="w-full bg-[#EBE9E2] text-gray-700 py-3.5 rounded-full text-sm font-semibold hover:bg-[#E2E0D8] transition-colors mb-8 shadow-sm flex items-center justify-center gap-2"
+          >
+            <Sparkles size={16} /> Upgrade to Pro
+          </Link>
 
           <div className="flex flex-col gap-3">
             <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Connect</span>
