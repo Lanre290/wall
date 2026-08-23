@@ -145,6 +145,16 @@ export default function WallClient({ slug }: { slug: string }) {
     { bg: "bg-[#E6E4E6]", dot: "bg-[#C4B7D2]" },
   ];
 
+  const getHandwritingClass = (id: number, baseSize: 'lg' | 'sm' | 'xl' = 'lg') => {
+    const styles = [
+      `font-sans ${baseSize === 'lg' ? 'text-lg font-medium' : baseSize === 'xl' ? 'text-2xl font-medium' : 'text-[15px] font-medium'}`,
+      `font-caveat ${baseSize === 'lg' ? 'text-3xl leading-8' : baseSize === 'xl' ? 'text-4xl leading-10' : 'text-2xl leading-6'}`,
+      `font-kalam ${baseSize === 'lg' ? 'text-xl' : baseSize === 'xl' ? 'text-3xl' : 'text-[17px]'}`,
+      `font-patrick ${baseSize === 'lg' ? 'text-2xl leading-7' : baseSize === 'xl' ? 'text-3xl leading-9' : 'text-xl leading-6'}`
+    ];
+    return styles[id % styles.length];
+  };
+
   useEffect(() => {
     setDisplayUrl(window.location.host + window.location.pathname);
     
@@ -570,7 +580,7 @@ export default function WallClient({ slug }: { slug: string }) {
                 touchAction: 'none' // Prevent scrolling while dragging on touch devices
               }}
             >
-              <p className="text-gray-900 text-lg mb-6 leading-relaxed font-medium select-none">
+              <p className={`text-gray-900 mb-6 leading-relaxed select-none ${getHandwritingClass(note.id, 'lg')}`}>
                 {note.text}
               </p>
               <div className="flex items-center justify-between select-none">
@@ -607,7 +617,7 @@ export default function WallClient({ slug }: { slug: string }) {
                   onClick={() => setSelectedNote(note)}
                   className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
                 >
-                  <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium line-clamp-4">{note.text}</p>
+                  <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.id, 'sm')}`}>{note.text}</p>
                   <div className="flex items-center justify-between">
                     <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</p>
                     <div className="flex items-center gap-1 text-gray-500">
@@ -627,7 +637,7 @@ export default function WallClient({ slug }: { slug: string }) {
                   onClick={() => setSelectedNote(note)}
                   className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
                 >
-                  <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium line-clamp-4">{note.text}</p>
+                  <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.id, 'sm')}`}>{note.text}</p>
                   <div className="flex items-center justify-between">
                     <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</p>
                     <div className="flex items-center gap-1 text-gray-500">
@@ -663,10 +673,10 @@ export default function WallClient({ slug }: { slug: string }) {
 
             {/* Note content */}
             <div className="flex-1 flex flex-col justify-center px-8 pb-8">
-              <p className="font-playfair text-2xl font-medium text-gray-900 leading-relaxed mb-10">
+              <p className={`text-gray-900 leading-relaxed mb-10 ${getHandwritingClass(selectedNote.id, 'xl')}`}>
                 {selectedNote.text}
               </p>
-              <p className="text-gray-600 text-base">
+              <p className="text-gray-600 text-base font-sans">
                 — {selectedNote.isAnonymous ? "Anonymous" : (selectedNote.authorName ?? "Someone")}
               </p>
             </div>

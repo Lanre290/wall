@@ -4,6 +4,9 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-playfair: var(--font-playfair);
+  --font-caveat: var(--font-caveat), cursive;
+  --font-kalam: var(--font-kalam), cursive;
+  --font-patrick: var(--font-patrick-hand), cursive;
 }
 
 body {
