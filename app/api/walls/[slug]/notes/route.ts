@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../../../lib/auth';
 import { Wall, Note, Appreciation, User } from '../../../../../lib/sequelize';
+import { UAParser } from 'ua-parser-js';
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
@@ -115,7 +116,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     const lon = req.headers.get('x-vercel-ip-longitude');
     const userAgentStr = req.headers.get('user-agent') || 'Unknown Device';
 
-    const UAParser = require('ua-parser-js');
     const parser = new UAParser(userAgentStr);
     const parsedDevice = parser.getResult();
 
