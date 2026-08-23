@@ -56,9 +56,15 @@ export default function ProPage() {
             <li className="flex items-center gap-3"><Check size={18} className="text-gray-400" /> Basic profile</li>
           </ul>
           
-          <button disabled className="w-full bg-gray-100/80 text-gray-400 py-4 rounded-full font-medium cursor-not-allowed">
-            Your Current Plan
-          </button>
+          {user?.plan === 'PRO' ? (
+            <button disabled className="w-full bg-gray-100/50 text-gray-400 py-4 rounded-full font-medium cursor-not-allowed">
+              Basic Plan
+            </button>
+          ) : (
+            <button disabled className="w-full bg-gray-100/80 text-gray-600 font-bold py-4 rounded-full cursor-default">
+              Your Current Plan
+            </button>
+          )}
         </div>
 
         {/* Pro Tier Card */}

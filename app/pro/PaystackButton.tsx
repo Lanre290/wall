@@ -41,6 +41,17 @@ export default function PaystackButton({ user, isLoaded }: { user: any, isLoaded
     });
   };
 
+  if (user?.plan === 'PRO') {
+    return (
+      <button 
+        disabled
+        className="relative z-10 w-full bg-white/20 text-white py-4 rounded-full font-bold cursor-default flex justify-center items-center border border-white/20"
+      >
+        Your Current Plan
+      </button>
+    );
+  }
+
   return (
     <button 
       onClick={handlePaystack}

@@ -1,7 +1,19 @@
 import Link from "next/link";
 import { LayoutGrid, User, Search, ChevronLeft } from "lucide-react";
+import { getSessionUser } from "../../lib/auth";
+import { User as DbUser } from "../../lib/sequelize";
 
-export function Header() {
+export async function Header() {
+  const session = await getSessionUser();
+  let isPro = false;
+  
+  if (session) {
+    const user = await DbUser.findByPk(session.userId);
+    if (user?.getDataValue('plan') === 'PRO') {
+      isPro = true;
+    }
+  }
+
   return (
     <header className="flex items-center justify-between px-6 py-4 md:px-12 md:py-6 max-w-7xl mx-auto w-full">
       <div className="flex items-center gap-3">
@@ -17,7 +29,9 @@ export function Header() {
       <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
         <Link href="/my-walls" className="hover:text-black transition-colors font-medium">My Walls</Link>
         <Link href="#" className="hover:text-black transition-colors">Explore</Link>
-        <Link href="/pro" className="flex items-center gap-1 font-medium text-amber-600 hover:text-amber-700 transition-colors">✨ Pro</Link>
+        {!isPro && (
+          <Link href="/pro" className="flex items-center gap-1 font-medium text-amber-600 hover:text-amber-700 transition-colors">✨ Pro</Link>
+        )}
         <Link 
           href="/create" 
           className="bg-[#0A1118] text-white px-5 py-2 rounded-full hover:bg-black transition-colors"
