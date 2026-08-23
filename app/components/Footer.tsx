@@ -23,8 +23,8 @@ export async function Footer() {
               ✨ Pro
             </Link>
           )}
-          <Link href="#" className="hover:text-black transition-colors">Terms</Link>
-          <Link href="/privacy" className="hover:text-black transition-colors">Privacy</Link>
+          <Link href="/terms" target="_blank" className="hover:text-black transition-colors">Terms</Link>
+          <Link href="/privacy" target="_blank" className="hover:text-black transition-colors">Privacy</Link>
         </div>
       </div>
     </footer>
