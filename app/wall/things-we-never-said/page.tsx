@@ -9,6 +9,7 @@ type Note = {
   id: number;
   text: string;
   color: string;
+  font: string;
   x: number;
   y: number;
   rotate: number;
@@ -17,16 +18,16 @@ type Note = {
 };
 
 const DEMO_NOTES: Note[] = [
-  { id: 1,  text: "I never told you how proud I was when you got that job. I just couldn't find the words.", color: "bg-[#EAEAC2]", x: 5,  y: 8,  rotate: -3, isAnonymous: true,  heartsCount: 47 },
-  { id: 2,  text: "I still think about that summer every single time it rains.",                             color: "bg-[#DFE4F2]", x: 32, y: 4,  rotate: 2,  isAnonymous: true,  heartsCount: 83 },
-  { id: 3,  text: "I forgave you years ago. I just didn't know how to tell you.",                         color: "bg-[#F3CAD9]", x: 59, y: 6,  rotate: -1, isAnonymous: false, heartsCount: 112 },
-  { id: 4,  text: "You were the first person who made me feel like I wasn't too much.",                   color: "bg-[#E6E4E6]", x: 72, y: 3,  rotate: 3,  isAnonymous: true,  heartsCount: 29 },
-  { id: 5,  text: "I practiced that conversation in my head a thousand times and then never had it.",     color: "bg-[#F3CAD9]", x: 12, y: 45, rotate: -4, isAnonymous: true,  heartsCount: 61 },
-  { id: 6,  text: "Thank you for sitting with me in the silence. I needed that more than words.",         color: "bg-[#EAEAC2]", x: 40, y: 50, rotate: 1,  isAnonymous: false, heartsCount: 95 },
-  { id: 7,  text: "I was scared you'd think less of me if you knew the truth.",                          color: "bg-[#DFE4F2]", x: 65, y: 48, rotate: -2, isAnonymous: true,  heartsCount: 38 },
-  { id: 8,  text: "Every time we said goodbye I hoped you'd turn around one more time.",                  color: "bg-[#E6E4E6]", x: 20, y: 72, rotate: 4,  isAnonymous: true,  heartsCount: 74 },
-  { id: 9,  text: "I'm sorry I made you feel invisible. You were never invisible to me.",                 color: "bg-[#EAEAC2]", x: 48, y: 75, rotate: -1, isAnonymous: false, heartsCount: 201 },
-  { id: 10, text: "I kept the voicemail. I still listen to it sometimes.",                               color: "bg-[#F3CAD9]", x: 75, y: 70, rotate: 3,  isAnonymous: true,  heartsCount: 56 },
+  { id: 1,  text: "I never told you how proud I was when you got that job. I just couldn't find the words.", color: "bg-[#EAEAC2]", font: "font-kalam", x: 5,  y: 8,  rotate: -3, isAnonymous: true,  heartsCount: 47 },
+  { id: 2,  text: "I still think about that summer every single time it rains.",                             color: "bg-[#DFE4F2]", font: "font-caveat", x: 32, y: 4,  rotate: 2,  isAnonymous: true,  heartsCount: 83 },
+  { id: 3,  text: "I forgave you years ago. I just didn't know how to tell you.",                         color: "bg-[#F3CAD9]", font: "font-sans", x: 59, y: 6,  rotate: -1, isAnonymous: false, heartsCount: 112 },
+  { id: 4,  text: "You were the first person who made me feel like I wasn't too much.",                   color: "bg-[#E6E4E6]", font: "font-patrick", x: 72, y: 3,  rotate: 3,  isAnonymous: true,  heartsCount: 29 },
+  { id: 5,  text: "I practiced that conversation in my head a thousand times and then never had it.",     color: "bg-[#F3CAD9]", font: "font-caveat", x: 12, y: 45, rotate: -4, isAnonymous: true,  heartsCount: 61 },
+  { id: 6,  text: "Thank you for sitting with me in the silence. I needed that more than words.",         color: "bg-[#EAEAC2]", font: "font-sans", x: 40, y: 50, rotate: 1,  isAnonymous: false, heartsCount: 95 },
+  { id: 7,  text: "I kept the voicemail because I was afraid I'd forget what you sounded like.",          color: "bg-[#DFE4F2]", font: "font-kalam", x: 70, y: 45, rotate: -2, isAnonymous: true,  heartsCount: 201 },
+  { id: 8,  text: "I wish I had hugged you one last time.",                                               color: "bg-[#E6E4E6]", font: "font-patrick", x: 8,  y: 75, rotate: 4,  isAnonymous: false, heartsCount: 310 },
+  { id: 9,  text: "I saw someone today who looked exactly like you from behind. My heart stopped.",       color: "bg-[#F3CAD9]", font: "font-caveat", x: 38, y: 80, rotate: -1, isAnonymous: true,  heartsCount: 45 },
+  { id: 10, text: "I'm doing okay now. I thought you should know.",                                       color: "bg-[#EAEAC2]", font: "font-kalam", x: 68, y: 82, rotate: 2,  isAnonymous: true,  heartsCount: 89 },
 ];
 
 export default function ThingsWeNeverSaidPage() {
@@ -36,16 +37,19 @@ export default function ThingsWeNeverSaidPage() {
   const [newText, setNewText] = useState("");
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [selectedFont, setSelectedFont] = useState(0);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
-  const getHandwritingClass = (id: number, baseSize: 'lg' | 'sm' | 'xl' = 'lg') => {
-    const styles = [
-      `font-sans ${baseSize === 'lg' ? 'text-lg font-medium' : baseSize === 'xl' ? 'text-2xl font-medium' : 'text-[15px] font-medium'}`,
-      `font-caveat ${baseSize === 'lg' ? 'text-3xl leading-8' : baseSize === 'xl' ? 'text-4xl leading-10' : 'text-2xl leading-6'}`,
-      `font-kalam ${baseSize === 'lg' ? 'text-xl' : baseSize === 'xl' ? 'text-3xl' : 'text-[17px]'}`,
-      `font-patrick ${baseSize === 'lg' ? 'text-2xl leading-7' : baseSize === 'xl' ? 'text-3xl leading-9' : 'text-xl leading-6'}`
-    ];
-    return styles[id % styles.length];
+  const fontOptions = ['font-sans', 'font-caveat', 'font-kalam', 'font-patrick'];
+
+  const getHandwritingClass = (font: string, baseSize: 'lg' | 'sm' | 'xl' = 'lg') => {
+    switch(font) {
+      case 'font-caveat': return `font-caveat ${baseSize === 'lg' ? 'text-3xl leading-8' : baseSize === 'xl' ? 'text-4xl leading-10' : 'text-2xl leading-6'}`;
+      case 'font-kalam': return `font-kalam ${baseSize === 'lg' ? 'text-xl' : baseSize === 'xl' ? 'text-3xl' : 'text-[17px]'}`;
+      case 'font-patrick': return `font-patrick ${baseSize === 'lg' ? 'text-2xl leading-7' : baseSize === 'xl' ? 'text-3xl leading-9' : 'text-xl leading-6'}`;
+      case 'font-sans':
+      default: return `font-sans ${baseSize === 'lg' ? 'text-lg font-medium' : baseSize === 'xl' ? 'text-2xl font-medium' : 'text-[15px] font-medium'}`;
+    }
   };
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -89,13 +93,14 @@ export default function ThingsWeNeverSaidPage() {
 
   const handleAddNote = () => {
     if (!newText.trim()) return;
-    const nextId = Math.max(...notes.map(n => n.id)) + 1;
+
     const newNote: Note = {
-      id: nextId,
+      id: Date.now(),
       text: newText,
       color: colors[selectedColor].bg,
-      x: Math.floor(Math.random() * 60) + 10,
-      y: Math.floor(Math.random() * 60) + 10,
+      font: fontOptions[selectedFont],
+      x: Math.floor(Math.random() * 70) + 10,
+      y: Math.floor(Math.random() * 70) + 10,
       rotate: Math.floor(Math.random() * 10) - 5,
       isAnonymous: true,
       heartsCount: 0,
@@ -103,6 +108,7 @@ export default function ThingsWeNeverSaidPage() {
     setNotes(prev => [newNote, ...prev]);
     setNewText("");
     setSelectedColor(0);
+    setSelectedFont(0);
     setIsModalOpen(false);
   };
 
@@ -337,25 +343,53 @@ export default function ThingsWeNeverSaidPage() {
               <p className="text-gray-200 text-sm">Your words join this collective wall.</p>
             </div>
 
-            <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[260px] flex flex-col`}>
+            <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[300px] flex flex-col`}>
               <textarea
                 value={newText}
                 onChange={(e) => setNewText(e.target.value.slice(0, 300))}
                 placeholder="Write anything..."
-                className="w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 text-lg placeholder-gray-500/70"
+                className={`w-full h-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont], 'lg')}`}
                 autoFocus
               />
-              <div className="flex items-end justify-between mt-4">
-                <div className="flex gap-2">
-                  {colors.map((color, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedColor(idx)}
-                      className={`w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all`}
-                    />
-                  ))}
+              
+              <div className="flex flex-col gap-3 mt-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Font</span>
+                  <div className="flex gap-2">
+                    {fontOptions.map((font, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedFont(idx)}
+                        className={`w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
+                          selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
+                        } ${getHandwritingClass(font, 'sm')}`}
+                        aria-label={`Select font ${idx}`}
+                      >
+                        Ag
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <span className="text-gray-500/70 text-sm">{newText.length}/300</span>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Color</span>
+                    <div className="flex gap-2">
+                      {colors.map((color, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedColor(idx)}
+                          className={`w-5 h-5 rounded-full ${color.bg} border-2 ${
+                            selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
+                          } shadow-sm transition-all`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-gray-500/70 text-sm font-medium">
+                    {newText.length}/300
+                  </div>
+                </div>
               </div>
             </div>
 

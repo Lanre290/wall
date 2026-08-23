@@ -10,6 +10,7 @@ type Note = {
   author: string | null;
   authorName: string | null;
   color: string;
+  font: string;
   x: number;
   y: number;
   rotate: number;
@@ -145,14 +146,14 @@ export default function WallClient({ slug }: { slug: string }) {
     { bg: "bg-[#E6E4E6]", dot: "bg-[#C4B7D2]" },
   ];
 
-  const getHandwritingClass = (id: number, baseSize: 'lg' | 'sm' | 'xl' = 'lg') => {
-    const styles = [
-      `font-sans ${baseSize === 'lg' ? 'text-lg font-medium' : baseSize === 'xl' ? 'text-2xl font-medium' : 'text-[15px] font-medium'}`,
-      `font-caveat ${baseSize === 'lg' ? 'text-3xl leading-8' : baseSize === 'xl' ? 'text-4xl leading-10' : 'text-2xl leading-6'}`,
-      `font-kalam ${baseSize === 'lg' ? 'text-xl' : baseSize === 'xl' ? 'text-3xl' : 'text-[17px]'}`,
-      `font-patrick ${baseSize === 'lg' ? 'text-2xl leading-7' : baseSize === 'xl' ? 'text-3xl leading-9' : 'text-xl leading-6'}`
-    ];
-    return styles[id % styles.length];
+  const getHandwritingClass = (font: string, baseSize: 'lg' | 'sm' | 'xl' = 'lg') => {
+    switch(font) {
+      case 'font-caveat': return `font-caveat ${baseSize === 'lg' ? 'text-3xl leading-8' : baseSize === 'xl' ? 'text-4xl leading-10' : 'text-2xl leading-6'}`;
+      case 'font-kalam': return `font-kalam ${baseSize === 'lg' ? 'text-xl' : baseSize === 'xl' ? 'text-3xl' : 'text-[17px]'}`;
+      case 'font-patrick': return `font-patrick ${baseSize === 'lg' ? 'text-2xl leading-7' : baseSize === 'xl' ? 'text-3xl leading-9' : 'text-xl leading-6'}`;
+      case 'font-sans':
+      default: return `font-sans ${baseSize === 'lg' ? 'text-lg font-medium' : baseSize === 'xl' ? 'text-2xl font-medium' : 'text-[15px] font-medium'}`;
+    }
   };
 
   useEffect(() => {
@@ -215,9 +216,12 @@ export default function WallClient({ slug }: { slug: string }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [selectedFont, setSelectedFont] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [wallSettings, setWallSettings] = useState({ privacy: 'PUBLIC', allowAnonymous: true });
+
+  const fontOptions = ['font-sans', 'font-caveat', 'font-kalam', 'font-patrick'];
 
   // Sync wallSettings when wall loads
   useEffect(() => {
@@ -257,6 +261,7 @@ export default function WallClient({ slug }: { slug: string }) {
         body: JSON.stringify({
           text: newText,
           color: colors[selectedColor].bg,
+          font: fontOptions[selectedFont],
           isAnonymous
         })
       });
@@ -281,6 +286,7 @@ export default function WallClient({ slug }: { slug: string }) {
         setNewText("");
         setIsAnonymous(true);
         setSelectedColor(0);
+        setSelectedFont(0);
       }
     } catch (error) {
       console.error("Failed to post note", error);
@@ -431,23 +437,47 @@ export default function WallClient({ slug }: { slug: string }) {
                 <p className="text-gray-200 text-sm">Only {wall.title} will see this.</p>
               </div>
 
-              <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[260px] flex flex-col`}>
+              <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[300px] flex flex-col`}>
                 <textarea
                   value={newText}
                   onChange={(e) => setNewText(e.target.value.slice(0, 300))}
                   placeholder="Write anything..."
-                  className="w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 text-lg placeholder-gray-500/70"
+                  className={`w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont], 'lg')}`}
                   autoFocus
                 />
-                <div className="flex items-end justify-between mt-4">
-                  <div className="flex gap-2">
-                    {colors.map((color, idx) => (
-                      <button key={idx} onClick={() => setSelectedColor(idx)}
-                        className={`w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all`}
-                      />
-                    ))}
+                
+                <div className="flex flex-col gap-3 mt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Font</span>
+                    <div className="flex gap-2">
+                      {fontOptions.map((font, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedFont(idx)}
+                          className={`w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
+                            selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
+                          } ${getHandwritingClass(font, 'sm')}`}
+                          aria-label={`Select font ${idx}`}
+                        >
+                          Ag
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <span className="text-gray-500/70 text-sm">{newText.length}/300</span>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Color</span>
+                      <div className="flex gap-2">
+                        {colors.map((color, idx) => (
+                          <button key={idx} onClick={() => setSelectedColor(idx)}
+                            className={`w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-gray-500/70 text-sm font-medium">{newText.length}/300</span>
+                  </div>
                 </div>
               </div>
 
@@ -580,7 +610,7 @@ export default function WallClient({ slug }: { slug: string }) {
                 touchAction: 'none' // Prevent scrolling while dragging on touch devices
               }}
             >
-              <p className={`text-gray-900 mb-6 leading-relaxed select-none ${getHandwritingClass(note.id, 'lg')}`}>
+              <p className={`text-gray-900 mb-6 leading-relaxed select-none ${getHandwritingClass(note.font, 'lg')}`}>
                 {note.text}
               </p>
               <div className="flex items-center justify-between select-none">
@@ -617,7 +647,7 @@ export default function WallClient({ slug }: { slug: string }) {
                   onClick={() => setSelectedNote(note)}
                   className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
                 >
-                  <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.id, 'sm')}`}>{note.text}</p>
+                  <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
                   <div className="flex items-center justify-between">
                     <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</p>
                     <div className="flex items-center gap-1 text-gray-500">
@@ -637,7 +667,7 @@ export default function WallClient({ slug }: { slug: string }) {
                   onClick={() => setSelectedNote(note)}
                   className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
                 >
-                  <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.id, 'sm')}`}>{note.text}</p>
+                  <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
                   <div className="flex items-center justify-between">
                     <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</p>
                     <div className="flex items-center gap-1 text-gray-500">
@@ -673,7 +703,7 @@ export default function WallClient({ slug }: { slug: string }) {
 
             {/* Note content */}
             <div className="flex-1 flex flex-col justify-center px-8 pb-8">
-              <p className={`text-gray-900 leading-relaxed mb-10 ${getHandwritingClass(selectedNote.id, 'xl')}`}>
+              <p className={`text-gray-900 leading-relaxed mb-10 ${getHandwritingClass(selectedNote.font, 'xl')}`}>
                 {selectedNote.text}
               </p>
               <p className="text-gray-600 text-base font-sans">
@@ -740,25 +770,48 @@ export default function WallClient({ slug }: { slug: string }) {
                 value={newText}
                 onChange={(e) => setNewText(e.target.value.slice(0, 300))}
                 placeholder="Write anything..."
-                className="w-full h-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 text-lg placeholder-gray-500/70"
+                className={`w-full h-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont], 'lg')}`}
                 autoFocus
               />
               
-              <div className="flex items-end justify-between mt-4">
-                <div className="flex gap-2">
-                  {colors.map((color, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedColor(idx)}
-                      className={`w-5 h-5 rounded-full ${color.bg} border-2 ${
-                        selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
-                      } shadow-sm transition-all`}
-                      aria-label={`Select color ${idx}`}
-                    />
-                  ))}
+              <div className="flex flex-col gap-3 mt-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Font</span>
+                  <div className="flex gap-2">
+                    {fontOptions.map((font, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedFont(idx)}
+                        className={`w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
+                          selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
+                        } ${getHandwritingClass(font, 'sm')}`}
+                        aria-label={`Select font ${idx}`}
+                      >
+                        Ag
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="text-gray-500/70 text-sm font-medium">
-                  {newText.length}/300
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Color</span>
+                    <div className="flex gap-2">
+                      {colors.map((color, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedColor(idx)}
+                          className={`w-5 h-5 rounded-full ${color.bg} border-2 ${
+                            selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
+                          } shadow-sm transition-all`}
+                          aria-label={`Select color ${idx}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-gray-500/70 text-sm font-medium">
+                    {newText.length}/300
+                  </div>
                 </div>
               </div>
             </div>

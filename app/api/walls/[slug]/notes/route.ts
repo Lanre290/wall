@@ -42,6 +42,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         id: plainNote.id,
         text: plainNote.text,
         color: plainNote.color,
+        font: plainNote.font || 'font-sans',
         isAnonymous: plainNote.isAnonymous,
         authorId: plainNote.authorId,
         authorName: plainNote.isAnonymous ? null : (plainNote.User?.name ?? null),
@@ -67,7 +68,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     }
 
     const body = await req.json();
-    const { text, color, isAnonymous } = body;
+    const { text, color, font, isAnonymous } = body;
 
     if (!text || text.length > 300) {
       return NextResponse.json({ error: 'Text is required and must be under 300 characters' }, { status: 400 });
@@ -83,6 +84,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     const newNote = await Note.create({
       text,
       color: color || '0',
+      font: font || 'font-sans',
       isAnonymous: isAnonymous !== undefined ? isAnonymous : true,
       wallId: wall.getDataValue('id'),
       authorId: session ? session.userId : null,

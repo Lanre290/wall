@@ -104,6 +104,10 @@ Note.init({
     type: DataTypes.STRING,
     defaultValue: '0', // Storing index or hex
   },
+  font: {
+    type: DataTypes.STRING,
+    defaultValue: 'font-sans',
+  },
   isAnonymous: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
