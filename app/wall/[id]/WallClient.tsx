@@ -837,7 +837,7 @@ export default function WallClient({ slug }: { slug: string }) {
                   {userPlan === 'PRO' ? (
                     <>
                       <HelpCircle size={16} strokeWidth={2.5} />
-                      View Author Insights
+                      Who sent this?
                     </>
                   ) : (
                     <>
