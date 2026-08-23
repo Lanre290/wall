@@ -664,7 +664,7 @@ export default function WallClient({ slug }: { slug: string }) {
             {/* Note content */}
             <div className="flex-1 flex flex-col justify-center px-8 pb-8">
               <p className="font-playfair text-2xl font-medium text-gray-900 leading-relaxed mb-10">
-                "{selectedNote.text}"
+                {selectedNote.text}
               </p>
               <p className="text-gray-600 text-base">
                 — {selectedNote.isAnonymous ? "Anonymous" : (selectedNote.authorName ?? "Someone")}
