@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import WallClient from "./WallClient";
-import { Wall } from "../../../../lib/sequelize";
+import { Wall } from "../../../lib/sequelize";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
