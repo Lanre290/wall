@@ -69,7 +69,7 @@ export default function LandingPage() {
           </svg>
         </div>
 
-        <div className="absolute top-[82%] right-[30%] md:right-[40%] rotate-[10deg] font-patrick text-xl opacity-60 text-gray-800">
+        <div className="absolute top-[82%] right-[5%] md:right-[40%] rotate-[10deg] font-patrick text-xl opacity-60 text-gray-800">
           so easy...
         </div>
 
