@@ -64,17 +64,17 @@ export async function POST(req: Request) {
     }
 
     // Enforce Pro plan limits
-    if (privacy === 'PRIVATE') {
+    if (privacy === 'PUBLIC') {
       const user = await User.findByPk(session.userId, { attributes: ['plan'] });
       const plan = user?.getDataValue('plan') || 'FREE';
 
       if (plan === 'FREE') {
-        const privateWallCount = await Wall.count({
-          where: { creatorId: session.userId, privacy: 'PRIVATE' }
+        const publicWallCount = await Wall.count({
+          where: { creatorId: session.userId, privacy: 'PUBLIC' }
         });
-        if (privateWallCount >= 1) {
+        if (publicWallCount >= 3) {
           return NextResponse.json({ 
-            error: 'Free plan is limited to 1 private wall. Please upgrade to Pro to create more.' 
+            error: 'Free plan is limited to 3 public walls. Please upgrade to Pro to create more.' 
           }, { status: 403 });
         }
       }

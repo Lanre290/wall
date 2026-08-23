@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Sparkles, Lock, Type, Paintbrush, ShieldQuestion, UserCog } from "lucide-react";
+import { Check, Sparkles, Lock, Type, Paintbrush, ShieldQuestion, UserCog, Globe } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
 import { useState, useEffect } from "react";
 import dynamic from 'next/dynamic';
@@ -49,7 +49,8 @@ export default function ProPage() {
           <div className="text-4xl font-bold font-sans tracking-tight mb-8 text-[#111]">$0</div>
           
           <ul className="flex flex-col gap-5 flex-1 mb-8 text-gray-600">
-            <li className="flex items-center gap-3"><Check size={18} className="text-gray-400" /> 1 Private Wall</li>
+            <li className="flex items-center gap-3"><Check size={18} className="text-gray-400" /> 3 Public Walls</li>
+            <li className="flex items-center gap-3"><Check size={18} className="text-gray-400" /> Unlimited Private Walls</li>
             <li className="flex items-center gap-3"><Check size={18} className="text-gray-400" /> 200 character limit</li>
             <li className="flex items-center gap-3"><Check size={18} className="text-gray-400" /> 2 note colors</li>
             <li className="flex items-center gap-3"><Check size={18} className="text-gray-400" /> Standard font only</li>
@@ -80,7 +81,7 @@ export default function ProPage() {
           <div className="mb-8" />
           
           <ul className="flex flex-col gap-5 flex-1 mb-10 text-gray-300 relative z-10">
-            <li className="flex items-center gap-3"><Lock size={18} className="text-[#F3CAD9]" /> <strong className="text-white font-medium">Unlimited</strong> Private Walls</li>
+            <li className="flex items-center gap-3"><Globe size={18} className="text-[#F3CAD9]" /> <strong className="text-white font-medium">Unlimited</strong> Public Walls</li>
             <li className="flex items-center gap-3"><Type size={18} className="text-[#DFE4F2]" /> <strong className="text-white font-medium">Unlimited</strong> characters per note</li>
             <li className="flex items-center gap-3"><Paintbrush size={18} className="text-[#EAEAC2]" /> <strong className="text-white font-medium">All 4</strong> curated colors</li>
             <li className="flex items-center gap-3"><Sparkles size={18} className="text-[#C4B7D2]" /> <strong className="text-white font-medium">All 3</strong> handwriting fonts</li>

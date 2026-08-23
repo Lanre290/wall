@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Globe, Lock, ArrowRight, Crown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -13,6 +13,30 @@ export default function CreateWallPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  
+  const [publicWallsLeft, setPublicWallsLeft] = useState<number | null>(null);
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    // Fetch user to check Pro status
+    fetch('/api/users/me')
+      .then(res => res.json())
+      .then(data => {
+        if (data.user?.plan === 'PRO') {
+          setIsPro(true);
+        } else {
+          // If Free, fetch walls to count PUBLIC ones
+          fetch('/api/walls')
+            .then(res => res.json())
+            .then(wallData => {
+              if (wallData.walls) {
+                const publicCount = wallData.walls.filter((w: any) => w.type === 'PUBLIC').length;
+                setPublicWallsLeft(Math.max(0, 3 - publicCount));
+              }
+            });
+        }
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,15 +126,27 @@ export default function CreateWallPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div 
                 onClick={() => setPrivacy("anyone")}
-                className={`flex flex-col gap-2 p-5 rounded-xl cursor-pointer transition-colors border ${
+                className={`relative flex flex-col gap-2 p-5 rounded-xl cursor-pointer transition-colors border ${
                   privacy === "anyone" 
                     ? "bg-[#2A313C] border-transparent text-white" 
                     : "bg-[#F3F2EE] border-transparent text-gray-900 hover:bg-[#EAE9E4]"
                 }`}
               >
+                {!isPro && (
+                  <div className="group/crown absolute -top-2 -right-2 z-10">
+                    <span className="flex text-amber-500 bg-white rounded-full p-1 shadow-sm border border-gray-100 cursor-help">
+                      <Crown size={14} strokeWidth={3} />
+                    </span>
+                    <div className="absolute bottom-full right-0 mb-2 w-48 p-2.5 bg-gray-900 text-white text-xs font-medium rounded-lg shadow-xl opacity-0 group-hover/crown:opacity-100 transition-opacity pointer-events-none text-center">
+                      Free plan: 3 Public Walls max.<br/>
+                      {publicWallsLeft !== null ? `You have ${publicWallsLeft} left.` : ''}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-2 font-semibold">
                   <Globe size={18} />
-                  <span>Anyone</span>
+                  <span>Anyone (Public)</span>
                 </div>
                 <p className={`text-sm ${privacy === "anyone" ? "text-gray-400" : "text-gray-500"}`}>
                   Anyone with the link can leave something behind.
@@ -119,15 +155,12 @@ export default function CreateWallPage() {
 
               <div 
                 onClick={() => setPrivacy("private")}
-                className={`relative flex flex-col gap-2 p-5 rounded-xl cursor-pointer transition-colors border ${
+                className={`flex flex-col gap-2 p-5 rounded-xl cursor-pointer transition-colors border ${
                   privacy === "private" 
                     ? "bg-[#2A313C] border-transparent text-white" 
                     : "bg-[#F3F2EE] border-transparent text-gray-900 hover:bg-[#EAE9E4]"
                 }`}
               >
-                <span className="absolute -top-2 -right-2 text-amber-500 bg-white rounded-full p-1 shadow-sm border border-gray-100">
-                  <Crown size={14} strokeWidth={3} />
-                </span>
                 <div className="flex items-center gap-2 font-semibold">
                   <Lock size={18} />
                   <span>Private</span>
