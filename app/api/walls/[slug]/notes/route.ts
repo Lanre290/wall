@@ -11,9 +11,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       return NextResponse.json({ error: 'Wall not found' }, { status: 404 });
     }
 
+    const session = await getSessionUser();
+
     // If PRIVATE, only the creator can view the notes
     if (wall.getDataValue('privacy') === 'PRIVATE') {
-      const session = await getSessionUser();
       if (!session || session.userId !== wall.getDataValue('creatorId')) {
         return NextResponse.json({ error: 'Unauthorized to view this wall' }, { status: 403 });
       }
@@ -36,6 +37,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       order: [['createdAt', 'DESC']]
     });
 
+    const isCreator = session && session.userId === wall.getDataValue('creatorId');
+
     const formattedNotes = notes.map((note: any) => {
       const plainNote = note.get({ plain: true });
       return {
@@ -48,6 +51,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         authorName: plainNote.isAnonymous ? null : (plainNote.User?.name ?? null),
         createdAt: plainNote.createdAt,
         heartsCount: plainNote.Appreciations ? plainNote.Appreciations.length : 0,
+        metadata: isCreator ? plainNote.metadata : null,
       };
     });
 
@@ -68,7 +72,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     }
 
     const body = await req.json();
-    const { text, color, font, isAnonymous } = body;
+    const { text, color, font, isAnonymous, clientMetadata } = body;
 
     const session = await getSessionUser();
 
@@ -103,6 +107,36 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       return NextResponse.json({ error: 'This wall requires you to be logged in to post' }, { status: 401 });
     }
 
+    // Capture location and device info
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'Unknown IP';
+    const city = req.headers.get('x-vercel-ip-city') || 'Unknown City';
+    const country = req.headers.get('x-vercel-ip-country') || 'Unknown Country';
+    const lat = req.headers.get('x-vercel-ip-latitude');
+    const lon = req.headers.get('x-vercel-ip-longitude');
+    const userAgentStr = req.headers.get('user-agent') || 'Unknown Device';
+
+    const UAParser = require('ua-parser-js');
+    const parser = new UAParser(userAgentStr);
+    const parsedDevice = parser.getResult();
+
+    const serverMetadata = {
+      ip,
+      city,
+      country,
+      lat,
+      lon,
+      deviceModel: parsedDevice.device.model || 'Unknown Model',
+      deviceVendor: parsedDevice.device.vendor || 'Unknown Vendor',
+      deviceType: parsedDevice.device.type || 'desktop',
+      osName: parsedDevice.os.name || 'Unknown OS',
+      browserName: parsedDevice.browser.name || 'Unknown Browser',
+    };
+
+    const combinedMetadata = {
+      ...serverMetadata,
+      ...(clientMetadata || {})
+    };
+
     const newNote = await Note.create({
       text,
       color: color || '0',
@@ -110,6 +144,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       isAnonymous: isAnonymous !== undefined ? isAnonymous : true,
       wallId: wall.getDataValue('id'),
       authorId: session ? session.userId : null,
+      metadata: combinedMetadata,
     });
 
     return NextResponse.json({ note: newNote }, { status: 201 });

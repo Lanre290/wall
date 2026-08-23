@@ -123,6 +123,10 @@ Note.init({
   authorId: {
     type: DataTypes.INTEGER,
     allowNull: true,
+  },
+  metadata: {
+    type: DataTypes.JSONB,
+    allowNull: true,
   }
 }, { sequelize, modelName: 'Note' });
 

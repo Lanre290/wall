@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { BottomNav } from "../../components/BottomNav";
-import { Share, MoreHorizontal, PenSquare, X, LayoutGrid, Compass, Info, Copy, Download, Loader2, Crown } from "lucide-react";
+import { Share, MoreHorizontal, PenSquare, X, LayoutGrid, Compass, Info, Copy, Download, Loader2, Crown, HelpCircle } from "lucide-react";
 
 type Note = {
   id: number;
@@ -16,6 +16,7 @@ type Note = {
   rotate: number;
   isAnonymous: boolean;
   heartsCount?: number;
+  metadata?: any;
 };
 
 type WallData = {
@@ -110,6 +111,7 @@ export default function WallClient({ slug }: { slug: string }) {
   const [newText, setNewText] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [selectedColor, setSelectedColor] = useState(0);
+  const [metadataModal, setMetadataModal] = useState<Note | null>(null);
 
   // Drag State
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -637,30 +639,38 @@ export default function WallClient({ slug }: { slug: string }) {
               <div className="flex items-center justify-between select-none">
                 <span className="text-gray-500 relative flex items-center gap-1 group">
                   — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
-                  
+                </span>
+                <div className="flex items-center gap-3">
                   {/* Who Sent This? Hint (Only for creator) */}
                   {isCreator && note.isAnonymous && (
                     <span 
-                      onClick={() => {
+                      onPointerDown={(e) => e.stopPropagation()} // Prevent dragging
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (userPlan === 'FREE') window.open('/pro', '_blank');
+                        else setMetadataModal(note);
                       }}
-                      className={`ml-1 transition-all ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
-                      title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
+                      className={`transition-all flex items-center ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
+                      title={userPlan === 'PRO' ? `View author details` : 'Upgrade to Pro to see who sent this'}
                     >
-                      <Crown size={12} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
+                      {userPlan === 'PRO' ? (
+                        <HelpCircle size={14} strokeWidth={2.5} />
+                      ) : (
+                        <Crown size={14} strokeWidth={2} />
+                      )}
                     </span>
                   )}
-                </span>
-                <button 
-                  onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking heart
-                  onClick={() => handleHeart(note.id)} 
-                  className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors"
-                >
-                  <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  <span className="text-xs font-medium">{note.heartsCount || 0}</span>
-                </button>
+                  <button 
+                    onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking heart
+                    onClick={() => handleHeart(note.id)} 
+                    className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors"
+                  >
+                    <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span className="text-xs font-medium">{note.heartsCount || 0}</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -687,26 +697,34 @@ export default function WallClient({ slug }: { slug: string }) {
                   <div className="flex items-center justify-between">
                     <p className="text-gray-500 text-xs flex items-center gap-1 group">
                       — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
+                    </p>
+                    <div className="flex items-center gap-3">
                       {isCreator && note.isAnonymous && (
                         <span 
                           onClick={(e) => {
+                            e.stopPropagation();
                             if (userPlan === 'FREE') {
-                              e.stopPropagation();
                               window.open('/pro', '_blank');
+                            } else {
+                              setMetadataModal(note);
                             }
                           }}
-                          className={`transition-all ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
-                          title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
+                          className={`transition-all flex items-center ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
+                          title={userPlan === 'PRO' ? `View author details` : 'Upgrade to Pro to see who sent this'}
                         >
-                          <Crown size={10} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
+                          {userPlan === 'PRO' ? (
+                            <HelpCircle size={12} strokeWidth={2.5} />
+                          ) : (
+                            <Crown size={12} strokeWidth={2} />
+                          )}
                         </span>
                       )}
-                    </p>
-                    <div className="flex items-center gap-1 text-gray-500">
-                      <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-red-400">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span className="text-[10px] font-medium">{note.heartsCount || 0}</span>
+                      <div className="flex items-center gap-1 text-gray-500">
+                        <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-red-400">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span className="text-[10px] font-medium">{note.heartsCount || 0}</span>
+                      </div>
                     </div>
                   </div>
                 </button>
@@ -723,26 +741,34 @@ export default function WallClient({ slug }: { slug: string }) {
                   <div className="flex items-center justify-between">
                     <p className="text-gray-500 text-xs flex items-center gap-1 group">
                       — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
+                    </p>
+                    <div className="flex items-center gap-3">
                       {isCreator && note.isAnonymous && (
                         <span 
                           onClick={(e) => {
+                            e.stopPropagation();
                             if (userPlan === 'FREE') {
-                              e.stopPropagation();
                               window.open('/pro', '_blank');
+                            } else {
+                              setMetadataModal(note);
                             }
                           }}
-                          className={`transition-all ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
-                          title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
+                          className={`transition-all flex items-center ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
+                          title={userPlan === 'PRO' ? `View author details` : 'Upgrade to Pro to see who sent this'}
                         >
-                          <Crown size={10} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
+                          {userPlan === 'PRO' ? (
+                            <HelpCircle size={12} strokeWidth={2.5} />
+                          ) : (
+                            <Crown size={12} strokeWidth={2} />
+                          )}
                         </span>
                       )}
-                    </p>
-                    <div className="flex items-center gap-1 text-gray-500">
-                      <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-red-400">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span className="text-[10px] font-medium">{note.heartsCount || 0}</span>
+                      <div className="flex items-center gap-1 text-gray-500">
+                        <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-red-400">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span className="text-[10px] font-medium">{note.heartsCount || 0}</span>
+                      </div>
                     </div>
                   </div>
                 </button>
@@ -1070,6 +1096,61 @@ export default function WallClient({ slug }: { slug: string }) {
               <p>Your wall currently has <span className="font-bold text-[#111]">{notes.length}</span> notes.</p>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Metadata Modal */}
+      {metadataModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMetadataModal(null)} />
+          <div className="bg-white p-6 md:p-8 rounded-3xl w-full max-w-sm relative z-10 shadow-2xl flex flex-col gap-6 transform animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-playfair text-xl font-bold text-[#111]">Note Insights</h3>
+                <p className="text-gray-500 text-sm mt-1">Originally authored by {metadataModal.authorName || 'a guest visitor'}</p>
+              </div>
+              <button onClick={() => setMetadataModal(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-4 bg-[#F3F2EE] p-5 rounded-2xl border border-gray-200/50">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Location</span>
+                <span className="text-gray-900 font-medium text-sm">
+                  {metadataModal.metadata?.city && metadataModal.metadata?.country 
+                    ? `${metadataModal.metadata.city}, ${metadataModal.metadata.country}` 
+                    : (metadataModal.metadata?.ip || 'Unknown Location')}
+                </span>
+                {metadataModal.metadata?.lat && metadataModal.metadata?.lon && (
+                  <a href={`https://www.google.com/maps?q=${metadataModal.metadata.lat},${metadataModal.metadata.lon}`} target="_blank" rel="noreferrer" className="text-amber-600 hover:text-amber-700 text-xs mt-1 underline">
+                    View precise location map
+                  </a>
+                )}
+              </div>
+              
+              <div className="h-[1px] w-full bg-gray-200/60" />
+              
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Device</span>
+                <span className="text-gray-900 font-medium text-sm capitalize">
+                  {metadataModal.metadata?.deviceVendor !== 'Unknown Vendor' 
+                    ? `${metadataModal.metadata.deviceVendor} ${metadataModal.metadata.deviceModel}`
+                    : (metadataModal.metadata?.osName || 'Unknown Device')}
+                </span>
+                <span className="text-gray-500 text-xs mt-1">
+                  Using {metadataModal.metadata?.browserName || 'Unknown Browser'}
+                </span>
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => setMetadataModal(null)}
+              className="w-full bg-[#0A1118] text-white py-3.5 rounded-xl font-bold hover:bg-black transition-colors"
+            >
+              Close Insights
+            </button>
           </div>
         </div>
       )}
