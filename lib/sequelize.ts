@@ -5,16 +5,34 @@ import 'pg-hstore';
 // Use DATABASE_URL from .env
 const connectionString = process.env.DATABASE_URL || 'postgres://user:password@localhost:5432/wall';
 
-const sequelize = new Sequelize(connectionString, {
-  dialect: 'postgres',
-  logging: false, // Set to console.log to see SQL queries
-  dialectOptions: process.env.NODE_ENV === 'production' ? {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  } : {}
-});
+const createSequelize = () => {
+  return new Sequelize(connectionString, {
+    dialect: 'postgres',
+    logging: false,
+    pool: {
+      max: 3, // Keep pool small for serverless/Next.js
+      min: 0,
+      idle: 10000,
+      acquire: 20000
+    },
+    dialectOptions: process.env.NODE_ENV === 'production' ? {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    } : {}
+  });
+};
+
+const globalForSequelize = globalThis as unknown as {
+  sequelize: Sequelize | undefined;
+};
+
+const sequelize = globalForSequelize.sequelize ?? createSequelize();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForSequelize.sequelize = sequelize;
+}
 
 // -- Define Models --
 
