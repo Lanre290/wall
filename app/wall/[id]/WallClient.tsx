@@ -517,9 +517,9 @@ export default function WallClient({ slug }: { slug: string }) {
 
       {/* Mobile bottom sheet */}
       {isSettingsOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
+        <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)} />
-          <div className="relative bg-white rounded-t-3xl p-6 pb-10 w-full z-10">
+          <div className="relative bg-white rounded-t-3xl p-6 pb-6 w-full z-10 mb-20">
             <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
             <div className="flex justify-between items-center mb-6">
               <h2 className="font-playfair text-xl font-bold text-[#111]">Wall Settings</h2>
