@@ -68,9 +68,14 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      router.push('/login');
+    }
   };
 
   if (loading) {
@@ -226,6 +231,14 @@ export default function ProfilePage() {
               <button className="w-10 h-10 bg-[#EBE9E2] rounded-full flex items-center justify-center text-gray-700 hover:bg-[#E2E0D8] transition-colors"><Share2 size={16} /></button>
             </div>
           </div>
+
+          <button 
+            onClick={handleLogout}
+            className="mt-8 flex items-center justify-center gap-2 text-[#D32F2F] font-medium text-sm p-3 w-full border border-red-100 rounded-full hover:bg-red-50 transition-colors"
+          >
+            <LogOut size={16} />
+            Log Out
+          </button>
         </div>
 
         {/* Right Column - Metrics */}
