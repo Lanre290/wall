@@ -17,6 +17,7 @@ export function Header() {
       <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
         <Link href="/my-walls" className="hover:text-black transition-colors font-medium">My Walls</Link>
         <Link href="#" className="hover:text-black transition-colors">Explore</Link>
+        <Link href="/pro" className="flex items-center gap-1 font-medium text-amber-600 hover:text-amber-700 transition-colors">✨ Pro</Link>
         <Link 
           href="/create" 
           className="bg-[#0A1118] text-white px-5 py-2 rounded-full hover:bg-black transition-colors"
