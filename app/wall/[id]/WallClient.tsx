@@ -1130,33 +1130,41 @@ export default function WallClient({ slug }: { slug: string }) {
             </div>
             
             <div className="flex flex-col gap-4 bg-[#F3F2EE] p-5 rounded-2xl border border-gray-200/50">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Location</span>
-                <span className="text-gray-900 font-medium text-sm">
-                  {metadataModal.metadata?.city && metadataModal.metadata?.country 
-                    ? `${metadataModal.metadata.city}, ${metadataModal.metadata.country}` 
-                    : (metadataModal.metadata?.ip || 'Unknown Location')}
-                </span>
-                {metadataModal.metadata?.lat && metadataModal.metadata?.lon && (
-                  <a href={`https://www.google.com/maps?q=${metadataModal.metadata.lat},${metadataModal.metadata.lon}`} target="_blank" rel="noreferrer" className="text-amber-600 hover:text-amber-700 text-xs mt-1 underline">
-                    View precise location map
-                  </a>
-                )}
-              </div>
-              
-              <div className="h-[1px] w-full bg-gray-200/60" />
-              
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Device</span>
-                <span className="text-gray-900 font-medium text-sm capitalize">
-                  {metadataModal.metadata?.deviceVendor !== 'Unknown Vendor' 
-                    ? `${metadataModal.metadata.deviceVendor} ${metadataModal.metadata.deviceModel}`
-                    : (metadataModal.metadata?.osName || 'Unknown Device')}
-                </span>
-                <span className="text-gray-500 text-xs mt-1">
-                  Using {metadataModal.metadata?.browserName || 'Unknown Browser'}
-                </span>
-              </div>
+              {!metadataModal.metadata ? (
+                <p className="text-gray-500 text-sm text-center py-2">
+                  No tracking data — this note was submitted before insights were enabled.
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Location</span>
+                    <span className="text-gray-900 font-medium text-sm">
+                      {metadataModal.metadata.city && metadataModal.metadata.country 
+                        ? `${metadataModal.metadata.city}, ${metadataModal.metadata.country}` 
+                        : (metadataModal.metadata.ip || 'Unknown Location')}
+                    </span>
+                    {metadataModal.metadata.lat && metadataModal.metadata.lon && (
+                      <a href={`https://www.google.com/maps?q=${metadataModal.metadata.lat},${metadataModal.metadata.lon}`} target="_blank" rel="noreferrer" className="text-amber-600 hover:text-amber-700 text-xs mt-1 underline">
+                        View precise location map
+                      </a>
+                    )}
+                  </div>
+                  
+                  <div className="h-[1px] w-full bg-gray-200/60" />
+                  
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1">Device</span>
+                    <span className="text-gray-900 font-medium text-sm capitalize">
+                      {metadataModal.metadata.deviceVendor && metadataModal.metadata.deviceVendor !== 'Unknown Vendor' 
+                        ? `${metadataModal.metadata.deviceVendor} ${metadataModal.metadata.deviceModel}`
+                        : (metadataModal.metadata.osName || 'Unknown Device')}
+                    </span>
+                    <span className="text-gray-500 text-xs mt-1">
+                      Using {metadataModal.metadata.browserName || 'Unknown Browser'}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
             
             <button 
