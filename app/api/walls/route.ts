@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../lib/auth';
-import { Wall, Note } from '../../../lib/sequelize';
+import { Wall, Note, User } from '../../../lib/sequelize';
 
 // Simple slug generator
 function generateSlug(title: string) {
@@ -65,7 +65,6 @@ export async function POST(req: Request) {
 
     // Enforce Pro plan limits
     if (privacy === 'PRIVATE') {
-      const { User } = require('../../../lib/sequelize');
       const user = await User.findByPk(session.userId, { attributes: ['plan'] });
       const plan = user?.getDataValue('plan') || 'FREE';
 
