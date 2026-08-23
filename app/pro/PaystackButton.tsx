@@ -11,8 +11,8 @@ export default function PaystackButton({ user, isLoaded }: { user: any, isLoaded
   const config = {
     reference: (new Date()).getTime().toString(),
     email: user?.email || "guest@example.com",
-    amount: 100 * 100, // 100 USD cents = $1.00
-    currency: "USD",
+    amount: 1500 * 100, // 1500 NGN in kobo (roughly equivalent to $1)
+    currency: "NGN",
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_placeholder",
     metadata: {
       userId: user?.id,
