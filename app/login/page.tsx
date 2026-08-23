@@ -53,24 +53,66 @@ export default function LoginPage() {
     const title = isTerms ? "Terms of Service" : "Privacy Policy";
     const content = isTerms ? (
       <>
-        <h3 className="font-playfair text-xl font-bold mb-4">1. Acceptance of Terms</h3>
-        <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-          By accessing and using Wall, you accept and agree to be bound by the terms and provision of this agreement. 
+        <h3 className="font-playfair text-lg font-bold mb-2">1. What Wall Is</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          Wall is a collaborative space where people can create walls and leave anonymous or named sticky notes on them. It is built for connection, memory, and expression — not for commercial data harvesting.
         </p>
-        <h3 className="font-playfair text-xl font-bold mb-4">2. User Content</h3>
-        <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-          You retain all your ownership rights in your content, but you are required to grant us a worldwide, non-exclusive, royalty-free, transferable license to use, reproduce, distribute, prepare derivative works of, and display that content.
+
+        <h3 className="font-playfair text-lg font-bold mb-2">2. Your Notes</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          You own what you write. By posting a note, you grant Wall a limited licence to display it on the wall it was posted to. We do not sell, license, or redistribute your content to third parties.
+        </p>
+
+        <h3 className="font-playfair text-lg font-bold mb-2">3. Acceptable Use</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          You agree not to post content that is abusive, hateful, threatening, sexually explicit, or otherwise harmful. Wall reserves the right to remove any content that violates these guidelines without prior notice.
+        </p>
+
+        <h3 className="font-playfair text-lg font-bold mb-2">4. Anonymous Notes</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          When you post anonymously, your name is not displayed. However, your account ID is still stored internally and may be used to moderate harmful content if necessary.
+        </p>
+
+        <h3 className="font-playfair text-lg font-bold mb-2">5. Wall Creators</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          If you create a wall, you are responsible for the content posted on it. You may set a wall to Private or Public at any time. Deleting a wall permanently removes all associated notes.
+        </p>
+
+        <h3 className="font-playfair text-lg font-bold mb-2">6. Changes</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          We may update these terms as Wall evolves. Continued use of the platform means you accept any updated terms.
         </p>
       </>
     ) : (
       <>
-        <h3 className="font-playfair text-xl font-bold mb-4">1. Information Collection</h3>
-        <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-          We collect information you provide directly to us, such as when you create or modify your account, request on-demand services, contact customer support, or otherwise communicate with us.
+        <h3 className="font-playfair text-lg font-bold mb-2">1. What We Collect</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          When you sign in with Google, we receive your name, email address, and profile picture from Google. We store these to create and identify your account. We do not receive your Google password.
         </p>
-        <h3 className="font-playfair text-xl font-bold mb-4">2. Use of Information</h3>
-        <p className="text-gray-600 mb-4 text-sm leading-relaxed">
-          We may use the information we collect about you to provide, maintain, and improve our services, including to facilitate payments, send receipts, provide products and services you request.
+
+        <h3 className="font-playfair text-lg font-bold mb-2">2. What We Store</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          We store the walls you create, the notes you leave (including whether they were posted anonymously), and hearts (appreciations) you give. This data is stored securely in a private database.
+        </p>
+
+        <h3 className="font-playfair text-lg font-bold mb-2">3. How We Use It</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          Your data is used solely to run Wall — to show your walls, your notes, and your profile stats. We do not run ads, sell your data, or share it with third parties.
+        </p>
+
+        <h3 className="font-playfair text-lg font-bold mb-2">4. Sessions & Cookies</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          We use a single secure HTTP-only cookie to keep you logged in. It expires after 7 days. No tracking cookies or analytics are used.
+        </p>
+
+        <h3 className="font-playfair text-lg font-bold mb-2">5. Deleting Your Data</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          You can request full deletion of your account and all associated data at any time by contacting us. Walls and notes you created will be permanently removed.
+        </p>
+
+        <h3 className="font-playfair text-lg font-bold mb-2">6. Contact</h3>
+        <p className="text-gray-600 mb-5 text-sm leading-relaxed">
+          For any privacy concerns, reach out via the contact link in the app. We take these requests seriously and respond within a reasonable time.
         </p>
       </>
     );
@@ -174,16 +216,6 @@ export default function LoginPage() {
                   CONTINUE WITH GOOGLE
                 </>
               )}
-            </button>
-
-            <div className="flex items-center gap-4 my-2">
-              <div className="flex-1 h-px bg-gray-300"></div>
-              <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-widest">OR</span>
-              <div className="flex-1 h-px bg-gray-300"></div>
-            </div>
-
-            <button className="w-full bg-transparent border-2 border-[#0A1118] text-[#0A1118] py-4 rounded-full font-semibold flex items-center justify-center hover:bg-black/5 transition-colors">
-              CONTINUE WITH EMAIL
             </button>
           </div>
 
