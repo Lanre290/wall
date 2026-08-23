@@ -251,15 +251,6 @@ export default function ProfilePage() {
             </Link>
           )}
 
-          <div className="flex flex-col gap-3">
-            <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Connect</span>
-            <div className="flex gap-3">
-              <button className="w-10 h-10 bg-[#EBE9E2] rounded-full flex items-center justify-center text-gray-700 hover:bg-[#E2E0D8] transition-colors"><Link2 size={16} /></button>
-              <button className="w-10 h-10 bg-[#EBE9E2] rounded-full flex items-center justify-center text-gray-700 hover:bg-[#E2E0D8] transition-colors"><Mail size={16} /></button>
-              <button className="w-10 h-10 bg-[#EBE9E2] rounded-full flex items-center justify-center text-gray-700 hover:bg-[#E2E0D8] transition-colors"><Share2 size={16} /></button>
-            </div>
-          </div>
-
           <button 
             onClick={handleLogout}
             className="mt-8 flex items-center justify-center gap-2 text-[#D32F2F] font-medium text-sm p-3 w-full border border-red-100 rounded-full hover:bg-red-50 transition-colors"
