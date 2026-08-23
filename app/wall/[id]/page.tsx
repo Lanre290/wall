@@ -12,8 +12,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   try {
     const wall = await Wall.findOne({ where: { slug } });
     if (wall) {
-      title = `${wall.getDataValue('title')} | Wall`;
-      description = wall.getDataValue('description') || `Explore ${wall.getDataValue('title')} on Wall.`;
+      title = `${wall.getDataValue('title')}`;
+      description = wall.getDataValue('description') || `Explore ${wall.getDataValue('title')} on Wall, a curated digital space to leave your thoughts, memories, and appreciations behind.`;
     }
   } catch (error) {
     console.error("Error fetching wall for metadata:", error);
@@ -26,11 +26,22 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       title,
       description,
       type: "website",
+      siteName: "Wall",
+      url: `https://trywall.vercel.app/wall/${slug}`,
+      images: [
+        {
+          url: "/logo.png",
+          width: 1200,
+          height: 630,
+          alt: `${title} - Wall`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: ["/logo.png"],
     }
   };
 }

@@ -38,8 +38,49 @@ const patrickHand = Patrick_Hand({
 });
 
 export const metadata: Metadata = {
-  title: "Wall",
-  description: "A digital collaborative wall",
+  metadataBase: new URL("https://trywall.vercel.app"),
+  title: {
+    default: "Wall | Leave something behind",
+    template: "%s | Wall"
+  },
+  description: "Wall is a beautifully curated digital space where you can anonymously or publicly leave thoughts, memories, and appreciations. Build private community boards or public digital ateliers to connect through shared experiences.",
+  keywords: ["digital wall", "collaborative space", "anonymous notes", "community board", "digital atelier", "memory board", "shared experiences", "virtual guestbook", "message board"],
+  authors: [{ name: "Wall" }],
+  creator: "Wall",
+  publisher: "Wall",
+  openGraph: {
+    title: "Wall | Leave something behind",
+    description: "Wall is a beautifully curated digital space where you can anonymously or publicly leave thoughts, memories, and appreciations.",
+    url: "https://trywall.vercel.app",
+    siteName: "Wall",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Wall Logo",
+      },
+    ],
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Wall | Leave something behind",
+    description: "Wall is a beautifully curated digital space where you can anonymously or publicly leave thoughts, memories, and appreciations.",
+    images: ["/logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

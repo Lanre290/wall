@@ -916,8 +916,20 @@ export default function WallClient({ slug }: { slug: string }) {
                         })}
                     </div>
                   </div>
-                  <div className="text-gray-500/70 text-sm font-medium">
-                    {newText.length}/{userPlan === 'PRO' ? '∞' : '200'}
+                  <div className="flex items-center gap-1.5">
+                    <div className="text-gray-500/70 text-sm font-medium">
+                      {newText.length}/{userPlan === 'PRO' ? '∞' : '200'}
+                    </div>
+                    {userPlan === 'FREE' && (
+                      <span 
+                        onClick={() => window.open('/pro', '_blank')}
+                        className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-amber-500 font-bold cursor-pointer hover:text-amber-600 transition-colors"
+                        title="Upgrade to Pro for unlimited characters"
+                      >
+                        <Crown size={12} strokeWidth={3} />
+                        (Unlimited)
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
