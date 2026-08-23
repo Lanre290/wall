@@ -157,6 +157,11 @@ export default function ProfilePage() {
 
         {/* Mobile Settings List */}
         <div className="bg-[#F3F2EE] rounded-2xl p-2 mb-8">
+          <Link href={`/wall/inbox-${user.id}`} className="flex items-center gap-4 p-4 border-b border-gray-200/50 w-full text-left">
+            <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-sm"><Share2 size={16} /></div>
+            <span className="font-medium text-[#111] flex-1 text-sm">Share Profile Inbox</span>
+            <ChevronRight size={16} className="text-gray-400" />
+          </Link>
           <button
             onClick={() => setIsEditing(true)}
             className="flex items-center gap-4 p-4 border-b border-gray-200/50 w-full text-left"
@@ -234,6 +239,13 @@ export default function ProfilePage() {
               </>
             )}
           </div>
+
+          <Link 
+            href={`/wall/inbox-${user.id}`}
+            className="w-full bg-blue-500 text-white py-3.5 rounded-full text-sm font-semibold hover:bg-blue-600 transition-colors mb-3 shadow-sm flex items-center justify-center gap-2"
+          >
+            <Share2 size={16} /> Share Profile Inbox
+          </Link>
 
           <button 
             onClick={() => setIsEditing(true)}

@@ -16,10 +16,14 @@ export default function LandingPage() {
       />
 
       {/* Global Background Doodles, Notes & Text */}
-      <div className="absolute inset-0 z-[-1] pointer-events-none">
+      <div className="absolute inset-0 z-[-1] pointer-events-none overflow-hidden">
         
-        {/* --- HERO SECTION DOODLES (0vh - 80vh) --- */}
-        <div className="absolute top-[25vh] left-[30%] md:left-[45%] rotate-[-15deg] opacity-70 text-gray-800">
+        {/* --- SCATTERED DOODLES & TEXT (0% - 100%) --- */}
+        <div className="absolute top-[8%] left-[25%] md:left-[35%] rotate-[-25deg] font-kalam text-xl md:text-2xl font-bold opacity-70 text-gray-800 tracking-wider">
+          LOVE
+        </div>
+
+        <div className="absolute top-[12%] left-[30%] md:left-[45%] rotate-[-15deg] opacity-70 text-gray-800">
           <svg width="42" height="32" viewBox="0 0 100 70" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M 8 8 L 92 6 L 90 64 L 6 62 Z" />
             <path d="M 8 8 L 48 38 L 92 6" />
@@ -27,7 +31,7 @@ export default function LandingPage() {
           </svg>
         </div>
 
-        <div className="absolute top-[35vh] right-[5%] md:right-[8%] rotate-[20deg] opacity-70 text-gray-800">
+        <div className="absolute top-[22%] right-[5%] md:right-[8%] rotate-[20deg] opacity-70 text-gray-800">
           <svg width="40" height="40" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M 35 60 C 20 75, 10 50, 30 35 L 40 25 C 55 10, 75 30, 60 45" />
             <path d="M 65 40 C 80 25, 90 50, 70 65 L 60 75 C 45 90, 25 70, 40 55" />
@@ -38,70 +42,66 @@ export default function LandingPage() {
           </svg>
         </div>
 
-        <div className="absolute top-[65vh] right-[25%] md:right-[35%] rotate-[-10deg] opacity-70 text-gray-800">
+        <div className="absolute top-[32%] right-[8%] md:right-[10%] rotate-[15deg] font-caveat text-3xl font-bold opacity-70 text-gray-800">
+          memories
+        </div>
+
+        <div className="absolute top-[42%] left-[5%] md:left-[8%] rotate-[10deg] font-patrick text-2xl opacity-70 text-gray-800">
+          psst...
+        </div>
+
+        <div className="absolute top-[52%] right-[25%] md:right-[35%] rotate-[-10deg] opacity-70 text-gray-800">
           <svg width="32" height="32" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M 50 88 C 50 88 12 55 15 28 C 18 12 40 12 50 32 C 60 12 82 12 85 28 C 88 55 50 88 50 88 Z" />
           </svg>
         </div>
-        
-        <div className="absolute top-[70vh] left-[25%] md:left-[40%] rotate-[15deg] opacity-70 text-gray-800">
+
+        <div className="absolute top-[62%] left-[25%] md:left-[40%] rotate-[15deg] opacity-70 text-gray-800">
           <svg width="50" height="30" viewBox="0 0 100 50" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M 10 25 Q 30 5, 50 25 T 85 25" />
             <path d="M 70 10 L 85 25 L 70 40" />
           </svg>
         </div>
 
-        <div className="absolute top-[10vh] left-[25%] md:left-[35%] rotate-[-25deg] font-kalam text-xl md:text-2xl font-bold opacity-70 text-gray-800 tracking-wider">
-          LOVE
-        </div>
-        <div className="absolute top-[45vh] right-[8%] md:right-[10%] rotate-[15deg] font-caveat text-3xl font-bold opacity-70 text-gray-800">
-          memories
-        </div>
-        <div className="absolute top-[60vh] left-[5%] md:left-[8%] rotate-[10deg] font-patrick text-2xl opacity-70 text-gray-800">
-          psst...
-        </div>
-
-        {/* --- HOW IT WORKS DOODLES (80vh - 160vh) --- */}
-        <div className="absolute top-[105vh] left-[15%] md:left-[25%] rotate-[-20deg] opacity-60 text-gray-800">
+        <div className="absolute top-[72%] left-[15%] md:left-[25%] rotate-[-20deg] opacity-60 text-gray-800">
           <svg width="35" height="35" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <path d="M 50 10 L 60 40 L 90 50 L 60 60 L 50 90 L 40 60 L 10 50 L 40 40 Z" />
           </svg>
         </div>
 
-        <div className="absolute top-[125vh] right-[10%] md:right-[15%] rotate-[15deg] opacity-60 text-gray-800">
+        <div className="absolute top-[82%] right-[30%] md:right-[40%] rotate-[10deg] font-patrick text-xl opacity-60 text-gray-800">
+          so easy...
+        </div>
+
+        <div className="absolute top-[88%] right-[10%] md:right-[15%] rotate-[15deg] opacity-60 text-gray-800">
           <svg width="45" height="45" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="50" cy="50" r="40" />
             <path d="M 35 40 L 35 40.1 M 65 40 L 65 40.1 M 35 65 C 45 75, 55 75, 65 65" />
           </svg>
         </div>
 
-        <div className="absolute top-[135vh] left-[5%] md:left-[12%] rotate-[-15deg] font-kalam text-2xl font-bold opacity-60 text-gray-800 tracking-wider">
+        <div className="absolute top-[92%] left-[5%] md:left-[12%] rotate-[-15deg] font-kalam text-2xl font-bold opacity-60 text-gray-800 tracking-wider">
           BEA
         </div>
-
-        <div className="absolute top-[95vh] right-[30%] md:right-[40%] rotate-[10deg] font-patrick text-xl opacity-60 text-gray-800">
-          so easy...
-        </div>
-
-        <div className="absolute top-[145vh] right-[5%] md:right-[35%] rotate-[-25deg] font-caveat text-2xl font-bold opacity-60 text-gray-800">
+        
+        <div className="absolute top-[96%] right-[5%] md:right-[35%] rotate-[-25deg] font-caveat text-2xl font-bold opacity-60 text-gray-800">
           shh...
         </div>
 
-
-        {/* --- Existing Colored Sticky Notes --- */}
-        <div className="absolute top-[15vh] left-[-5%] md:left-[10%] w-[200px] h-[200px] bg-[#EAEAC2] opacity-70 rotate-[-5deg] rounded-lg shadow-sm blur-[1px] p-4 flex">
+        {/* --- SCATTERED COLORED STICKY NOTES --- */}
+        <div className="absolute top-[5%] left-[-5%] md:left-[10%] w-[200px] h-[200px] bg-[#EAEAC2] opacity-70 rotate-[-5deg] rounded-lg shadow-sm blur-[1px] p-4 flex">
            <p className="text-gray-800 font-medium text-sm">You're doing better than you think.</p>
         </div>
         
-        <div className="absolute top-[10vh] right-[-10%] md:right-[20%] w-[180px] h-[180px] bg-[#DFE4F2] opacity-60 rotate-[8deg] rounded-lg shadow-sm blur-[1px] p-5 flex items-center justify-center">
+        <div className="absolute top-[28%] right-[-10%] md:right-[20%] w-[180px] h-[180px] bg-[#DFE4F2] opacity-60 rotate-[8deg] rounded-lg shadow-sm blur-[1px] p-5 flex items-center justify-center">
            <p className="text-gray-800 font-medium text-md font-kalam text-center leading-tight">i miss our late night talks.</p>
         </div>
         
-        <div className="absolute top-[75vh] left-[5%] md:left-[15%] w-[220px] h-[220px] bg-[#F3CAD9] opacity-60 rotate-[-12deg] rounded-lg shadow-sm blur-[2px] p-6 flex items-center justify-center">
+        <div className="absolute top-[58%] left-[5%] md:left-[15%] w-[220px] h-[220px] bg-[#F3CAD9] opacity-60 rotate-[-12deg] rounded-lg shadow-sm blur-[2px] p-6 flex items-center justify-center">
            <p className="text-gray-800 font-bold text-lg font-caveat text-center leading-tight">I lied when I said I didn't care.</p>
         </div>
         
-        <div className="absolute top-[65vh] right-[5%] md:right-[15%] w-[190px] h-[190px] bg-[#E6E4E6] opacity-70 rotate-[5deg] rounded-lg shadow-sm blur-[1px] p-5 flex items-center justify-center">
+        <div className="absolute top-[85%] right-[5%] md:right-[15%] w-[190px] h-[190px] bg-[#E6E4E6] opacity-70 rotate-[5deg] rounded-lg shadow-sm blur-[1px] p-5 flex items-center justify-center">
            <p className="text-gray-800 font-medium text-md text-center font-patrick leading-tight">I still listen to that playlist you made me.</p>
         </div>
       </div>

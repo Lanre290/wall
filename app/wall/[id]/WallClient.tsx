@@ -1002,25 +1002,27 @@ export default function WallClient({ slug }: { slug: string }) {
             </div>
 
             {/* Controls */}
-            <div className="mt-4 bg-white p-4 rounded-xl shadow-lg flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="font-medium text-gray-900 text-sm">Post Anonymously</span>
-                <span className="text-xs text-gray-500">Hide your identity from others.</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAnonymous(!isAnonymous)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  isAnonymous ? "bg-[#0A1118]" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    isAnonymous ? "translate-x-6" : "translate-x-1"
+            {!(/^inbox-\d+$/.test(slug)) && (
+              <div className="mt-4 bg-white p-4 rounded-xl shadow-lg flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-900 text-sm">Post Anonymously</span>
+                  <span className="text-xs text-gray-500">Hide your identity from others.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAnonymous(!isAnonymous)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    isAnonymous ? "bg-[#0A1118]" : "bg-gray-300"
                   }`}
-                />
-              </button>
-            </div>
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      isAnonymous ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

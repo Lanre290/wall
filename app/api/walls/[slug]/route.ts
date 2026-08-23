@@ -6,13 +6,40 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   try {
     const { slug } = await params;
 
-    const wall = await Wall.findOne({
+    let wall = await Wall.findOne({
       where: { slug },
       include: [{
         model: User,
         attributes: ['name', 'avatarUrl']
       }]
     });
+
+    // Auto-create profile walls on the fly (Strict regex to prevent collisions with normal walls)
+    const inboxMatch = slug.match(/^inbox-(\d+)$/);
+    if (!wall && inboxMatch) {
+      const userId = parseInt(inboxMatch[1], 10);
+      if (!isNaN(userId)) {
+        const user = await User.findByPk(userId);
+        if (user) {
+          wall = await Wall.create({
+            slug,
+            title: `${user.getDataValue('name')}'s Box`,
+            description: user.getDataValue('bio') || 'Leave me an anonymous message...',
+            privacy: 'PUBLIC',
+            allowAnonymous: true,
+            creatorId: userId
+          }) as any; // Need to requery to include user
+          
+          wall = await Wall.findOne({
+            where: { slug },
+            include: [{
+              model: User,
+              attributes: ['name', 'avatarUrl']
+            }]
+          });
+        }
+      }
+    }
 
     if (!wall) {
       return NextResponse.json({ error: 'Wall not found' }, { status: 404 });

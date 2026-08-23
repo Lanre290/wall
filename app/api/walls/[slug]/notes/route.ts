@@ -73,7 +73,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     }
 
     const body = await req.json();
-    const { text, color, font, isAnonymous, clientMetadata } = body;
+    let { text, color, font, isAnonymous, clientMetadata } = body;
+
+    // Strict regex to ensure it only applies to actual profile walls
+    if (/^inbox-\d+$/.test(slug)) {
+      isAnonymous = true;
+    }
 
     const session = await getSessionUser();
 
