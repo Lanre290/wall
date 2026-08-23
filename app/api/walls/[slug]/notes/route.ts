@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../../../lib/auth';
-import { Wall, Note, Appreciation } from '../../../../../lib/sequelize';
+import { Wall, Note, Appreciation, User } from '../../../../../lib/sequelize';
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
@@ -19,13 +19,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       }
     }
 
-    // Fetch notes and include appreciations to calculate the hearts count
+    // Fetch notes, join User for author name, include Appreciations for hearts count
     const notes = await Note.findAll({
       where: { wallId: wall.getDataValue('id') },
       include: [
         {
           model: Appreciation,
           attributes: ['userId']
+        },
+        {
+          model: User,
+          attributes: ['name'],
+          required: false // LEFT JOIN — anonymous notes have no author
         }
       ],
       order: [['createdAt', 'DESC']]
@@ -39,6 +44,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
         color: plainNote.color,
         isAnonymous: plainNote.isAnonymous,
         authorId: plainNote.authorId,
+        authorName: plainNote.isAnonymous ? null : (plainNote.User?.name ?? null),
         createdAt: plainNote.createdAt,
         heartsCount: plainNote.Appreciations ? plainNote.Appreciations.length : 0,
       };

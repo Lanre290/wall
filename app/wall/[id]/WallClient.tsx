@@ -8,6 +8,7 @@ type Note = {
   id: number;
   text: string;
   author: string | null;
+  authorName: string | null;
   color: string;
   x: number;
   y: number;
@@ -531,7 +532,7 @@ export default function WallClient({ slug }: { slug: string }) {
                 {note.text}
               </p>
               <div className="flex items-center justify-between select-none">
-                <span className="text-gray-500">— {note.isAnonymous ? "Anonymous" : "User"}</span>
+                <span className="text-gray-500">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</span>
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking heart
                   onClick={() => handleHeart(note.id)} 
@@ -562,7 +563,7 @@ export default function WallClient({ slug }: { slug: string }) {
                 <div key={note.id} className={`p-5 rounded-lg shadow-sm w-full ${note.color}`}>
                   <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium">{note.text}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : "User"}</p>
+                    <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</p>
                     <button onClick={() => handleHeart(note.id)} className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
                       <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -578,7 +579,7 @@ export default function WallClient({ slug }: { slug: string }) {
                 <div key={note.id} className={`p-5 rounded-lg shadow-sm w-full ${note.color}`}>
                   <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium">{note.text}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : "User"}</p>
+                    <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</p>
                     <button onClick={() => handleHeart(note.id)} className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors">
                       <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
