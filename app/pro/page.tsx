@@ -2,8 +2,31 @@
 
 import { Check, Sparkles, Lock, Type, Paintbrush, ShieldQuestion, UserCog } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
+import { useState, useEffect } from "react";
+import dynamic from 'next/dynamic';
+
+// Dynamically import PaystackButton with SSR disabled to prevent 'window is not defined' error
+const PaystackButton = dynamic(() => import('./PaystackButton'), { ssr: false });
 
 export default function ProPage() {
+  const [user, setUser] = useState<any>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/users/me')
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Not logged in');
+      })
+      .then(data => {
+        setUser(data.user);
+        setIsLoaded(true);
+      })
+      .catch(() => {
+        setIsLoaded(true);
+      });
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col items-center px-4 py-12 md:py-24 bg-[#FAF9F6] min-h-screen">
       <div className="text-center mb-16 mt-8">
@@ -59,9 +82,7 @@ export default function ProPage() {
             <li className="flex items-center gap-3"><UserCog size={18} className="text-[#B5C2DC]" /> Full profile customization</li>
           </ul>
           
-          <button className="relative z-10 w-full bg-white text-[#0A1118] py-4 rounded-full font-bold hover:bg-gray-100 transition-colors shadow-lg active:scale-[0.98]">
-            Upgrade to Pro — $1
-          </button>
+          <PaystackButton user={user} isLoaded={isLoaded} />
         </div>
       </div>
 

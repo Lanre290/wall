@@ -326,10 +326,13 @@ export default function ProfilePage() {
                   type="text"
                   value={editForm.tagsInput}
                   onChange={e => setEditForm(f => ({ ...f, tagsInput: e.target.value }))}
+                  onClick={() => {
+                    if (user.plan === 'FREE') window.open('/pro', '_blank');
+                  }}
+                  readOnly={user.plan === 'FREE'}
                   placeholder="Design, Curation, Art..."
-                  disabled={user.plan === 'FREE'}
                   title={user.plan === 'FREE' ? "Upgrade to Pro to add custom tags" : ""}
-                  className={`w-full bg-[#F6F5F2] rounded-xl px-4 py-3 text-sm font-medium text-[#111] outline-none focus:ring-2 focus:ring-[#0A1118]/20 ${user.plan === 'FREE' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full bg-[#F6F5F2] rounded-xl px-4 py-3 text-sm font-medium text-[#111] outline-none focus:ring-2 focus:ring-[#0A1118]/20 ${user.plan === 'FREE' ? 'opacity-50 cursor-pointer hover:opacity-70 transition-opacity' : ''}`}
                 />
                 {user.plan === 'FREE' && <p className="text-[10px] text-amber-600 mt-1">Unlock full profile customization with Pro.</p>}
               </div>

@@ -641,7 +641,10 @@ export default function WallClient({ slug }: { slug: string }) {
                   {/* Who Sent This? Hint (Only for creator) */}
                   {isCreator && note.isAnonymous && (
                     <span 
-                      className={`ml-1 cursor-help transition-all ${userPlan === 'PRO' ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                      onClick={() => {
+                        if (userPlan === 'FREE') window.open('/pro', '_blank');
+                      }}
+                      className={`ml-1 transition-all ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
                       title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
                     >
                       <Crown size={12} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
@@ -686,7 +689,13 @@ export default function WallClient({ slug }: { slug: string }) {
                       — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
                       {isCreator && note.isAnonymous && (
                         <span 
-                          className={`cursor-help transition-all ${userPlan === 'PRO' ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                          onClick={(e) => {
+                            if (userPlan === 'FREE') {
+                              e.stopPropagation();
+                              window.open('/pro', '_blank');
+                            }
+                          }}
+                          className={`transition-all ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
                           title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
                         >
                           <Crown size={10} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
@@ -716,7 +725,13 @@ export default function WallClient({ slug }: { slug: string }) {
                       — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
                       {isCreator && note.isAnonymous && (
                         <span 
-                          className={`cursor-help transition-all ${userPlan === 'PRO' ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                          onClick={(e) => {
+                            if (userPlan === 'FREE') {
+                              e.stopPropagation();
+                              window.open('/pro', '_blank');
+                            }
+                          }}
+                          className={`transition-all ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
                           title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
                         >
                           <Crown size={10} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
@@ -763,7 +778,13 @@ export default function WallClient({ slug }: { slug: string }) {
                 — {selectedNote.isAnonymous ? "Anonymous" : (selectedNote.authorName ?? "Someone")}
                 {isCreator && selectedNote.isAnonymous && (
                   <span 
-                    className={`cursor-help transition-all ${userPlan === 'PRO' ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                    onClick={(e) => {
+                      if (userPlan === 'FREE') {
+                        e.stopPropagation();
+                        window.open('/pro', '_blank');
+                      }
+                    }}
+                    className={`transition-all ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
                     title={userPlan === 'PRO' ? `Hint: Originally authored by ${selectedNote.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
                   >
                     <Crown size={14} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
@@ -839,50 +860,60 @@ export default function WallClient({ slug }: { slug: string }) {
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Font</span>
                   <div className="flex gap-2 relative">
-                    {fontOptions.map((font, idx) => {
-                      const isPremium = idx > 0;
-                      const isLocked = userPlan === 'FREE' && isPremium;
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => !isLocked && setSelectedFont(idx)}
-                          disabled={isLocked}
-                          title={isLocked ? "Pro Plan Required" : ""}
-                          className={`relative w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
-                            selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
-                          } ${getHandwritingClass(font, 'sm')} ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
-                          aria-label={`Select font ${idx}`}
-                        >
-                          Ag
-                          {isLocked && <Crown size={10} className="absolute -top-1.5 -right-1.5 text-amber-500 drop-shadow-sm" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Color</span>
-                    <div className="flex gap-2 relative">
-                      {colors.map((color, idx) => {
-                        const isPremium = idx > 1;
+                      {fontOptions.map((font, idx) => {
+                        const isPremium = idx > 0;
                         const isLocked = userPlan === 'FREE' && isPremium;
                         return (
                           <button
                             key={idx}
-                            onClick={() => !isLocked && setSelectedColor(idx)}
-                            disabled={isLocked}
+                            onClick={() => {
+                              if (isLocked) {
+                                window.open('/pro', '_blank');
+                              } else {
+                                setSelectedFont(idx);
+                              }
+                            }}
                             title={isLocked ? "Pro Plan Required" : ""}
-                            className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${
-                              selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
-                            } shadow-sm transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
-                            aria-label={`Select color ${idx}`}
+                            className={`relative w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
+                              selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
+                            } ${getHandwritingClass(font, 'sm')} ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                            aria-label={`Select font ${idx}`}
                           >
-                            {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                            Ag
+                            {isLocked && <Crown size={10} className="absolute -top-1.5 -right-1.5 text-amber-500 drop-shadow-sm" />}
                           </button>
                         );
                       })}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Color</span>
+                      <div className="flex gap-2 relative">
+                        {colors.map((color, idx) => {
+                          const isPremium = idx > 1;
+                          const isLocked = userPlan === 'FREE' && isPremium;
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                if (isLocked) {
+                                  window.open('/pro', '_blank');
+                                } else {
+                                  setSelectedColor(idx);
+                                }
+                              }}
+                              title={isLocked ? "Pro Plan Required" : ""}
+                              className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${
+                                selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
+                              } shadow-sm transition-all ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                              aria-label={`Select color ${idx}`}
+                            >
+                              {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                            </button>
+                          );
+                        })}
                     </div>
                   </div>
                   <div className="text-gray-500/70 text-sm font-medium">
