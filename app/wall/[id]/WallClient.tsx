@@ -26,6 +26,73 @@ type WallData = {
   allowAnonymous: boolean;
 };
 
+function SettingsContent({ wallSettings, setWallSettings, isSavingSettings, onSave, onCancel }: {
+  wallSettings: { privacy: string; allowAnonymous: boolean };
+  setWallSettings: React.Dispatch<React.SetStateAction<{ privacy: string; allowAnonymous: boolean }>>;
+  isSavingSettings: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <>
+      {/* Privacy Toggle */}
+      <div className="mb-4">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Visibility</p>
+        <div className="flex bg-[#F3F2EE] rounded-full p-1">
+          <button
+            onClick={() => setWallSettings(s => ({ ...s, privacy: 'PUBLIC' }))}
+            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${wallSettings.privacy === 'PUBLIC' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
+          >
+            🌍 Public
+          </button>
+          <button
+            onClick={() => setWallSettings(s => ({ ...s, privacy: 'PRIVATE' }))}
+            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${wallSettings.privacy === 'PRIVATE' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
+          >
+            🔒 Private
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+          {wallSettings.privacy === 'PRIVATE'
+            ? 'Visitors can drop messages but cannot read the wall. Only you see the notes.'
+            : 'Anyone with the link can view and leave notes on this wall.'}
+        </p>
+      </div>
+
+      {/* Anonymous Toggle */}
+      <div className="mb-5">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Anonymous notes</p>
+        <button
+          onClick={() => setWallSettings(s => ({ ...s, allowAnonymous: !s.allowAnonymous }))}
+          className="flex items-center justify-between w-full bg-[#F3F2EE] rounded-xl px-4 py-3"
+        >
+          <span className="text-sm font-medium text-[#111]">Allow anonymous posting</span>
+          <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${wallSettings.allowAnonymous ? 'bg-[#0A1118]' : 'bg-gray-300'}`}>
+            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${wallSettings.allowAnonymous ? 'translate-x-4' : 'translate-x-0'}`} />
+          </div>
+        </button>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={onCancel}
+          className="flex-1 py-3 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onSave}
+          disabled={isSavingSettings}
+          className="flex-1 py-3 rounded-full text-sm font-semibold bg-[#0A1118] text-white hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+        >
+          {isSavingSettings ? <Loader2 size={14} className="animate-spin" /> : null}
+          {isSavingSettings ? 'Saving...' : 'Save'}
+        </button>
+      </div>
+    </>
+  );
+}
+
 export default function WallClient({ slug }: { slug: string }) {
   const [wall, setWall] = useState<WallData | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -426,65 +493,16 @@ export default function WallClient({ slug }: { slug: string }) {
                 <MoreHorizontal size={20} className="text-gray-700" />
               </button>
 
-              {/* Settings Dropdown */}
+              {/* Desktop dropdown only */}
               {isSettingsOpen && (
-                <div className="absolute right-0 top-14 md:top-12 z-50 bg-white rounded-2xl shadow-xl border border-gray-100 p-5 w-72">
-                  <h3 className="font-playfair text-lg font-bold text-[#111] mb-4">Wall Settings</h3>
-
-                  {/* Privacy Toggle */}
-                  <div className="mb-4">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Visibility</p>
-                    <div className="flex bg-[#F3F2EE] rounded-full p-1">
-                      <button
-                        onClick={() => setWallSettings(s => ({ ...s, privacy: 'PUBLIC' }))}
-                        className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${wallSettings.privacy === 'PUBLIC' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
-                      >
-                        🌍 Public
-                      </button>
-                      <button
-                        onClick={() => setWallSettings(s => ({ ...s, privacy: 'PRIVATE' }))}
-                        className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${wallSettings.privacy === 'PRIVATE' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
-                      >
-                        🔒 Private
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-                      {wallSettings.privacy === 'PRIVATE'
-                        ? 'Visitors can leave messages but cannot read the wall. Only you see the notes.'
-                        : 'Anyone with the link can view and leave notes on this wall.'}
-                    </p>
-                  </div>
-
-                  {/* Anonymous Toggle */}
-                  <div className="mb-5">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Anonymous notes</p>
-                    <button
-                      onClick={() => setWallSettings(s => ({ ...s, allowAnonymous: !s.allowAnonymous }))}
-                      className="flex items-center justify-between w-full bg-[#F3F2EE] rounded-xl px-4 py-3"
-                    >
-                      <span className="text-sm font-medium text-[#111]">Allow anonymous posting</span>
-                      <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${wallSettings.allowAnonymous ? 'bg-[#0A1118]' : 'bg-gray-300'}`}>
-                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${wallSettings.allowAnonymous ? 'translate-x-4' : 'translate-x-0'}`} />
-                      </div>
-                    </button>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setIsSettingsOpen(false)}
-                      className="flex-1 py-2.5 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSaveSettings}
-                      disabled={isSavingSettings}
-                      className="flex-1 py-2.5 rounded-full text-sm font-semibold bg-[#0A1118] text-white hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-                    >
-                      {isSavingSettings ? <Loader2 size={14} className="animate-spin" /> : null}
-                      {isSavingSettings ? 'Saving...' : 'Save'}
-                    </button>
-                  </div>
+                <div className="hidden md:block absolute right-0 top-12 z-50 bg-white rounded-2xl shadow-xl border border-gray-100 p-5 w-72">
+                  <SettingsContent
+                    wallSettings={wallSettings}
+                    setWallSettings={setWallSettings}
+                    isSavingSettings={isSavingSettings}
+                    onSave={handleSaveSettings}
+                    onCancel={() => setIsSettingsOpen(false)}
+                  />
                 </div>
               )}
             </div>
@@ -492,9 +510,32 @@ export default function WallClient({ slug }: { slug: string }) {
         </div>
       </div>
 
-      {/* Click-away to close settings */}
+      {/* Click-away backdrop (desktop only) */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
+        <div className="hidden md:block fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
+      )}
+
+      {/* Mobile bottom sheet */}
+      {isSettingsOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)} />
+          <div className="relative bg-white rounded-t-3xl p-6 pb-10 w-full z-10">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-playfair text-xl font-bold text-[#111]">Wall Settings</h2>
+              <button onClick={() => setIsSettingsOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            <SettingsContent
+              wallSettings={wallSettings}
+              setWallSettings={setWallSettings}
+              isSavingSettings={isSavingSettings}
+              onSave={handleSaveSettings}
+              onCancel={() => setIsSettingsOpen(false)}
+            />
+          </div>
+        </div>
       )}
 
       {/* Desktop Canvas */}
