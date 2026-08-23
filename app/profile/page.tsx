@@ -121,7 +121,14 @@ export default function ProfilePage() {
             </button>
           </div>
           
-          <h2 className="text-2xl font-bold text-[#111] mb-2">{user.name}</h2>
+          <h2 className="text-2xl font-bold text-[#111] mb-2 flex items-center justify-center gap-2">
+            {user.name}
+            {user.plan === 'PRO' && (
+              <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-md flex items-center gap-1 font-bold uppercase tracking-widest border border-amber-200">
+                <Crown size={12} strokeWidth={3} /> Pro
+              </span>
+            )}
+          </h2>
           <p className="text-gray-600 italic text-sm max-w-[260px] leading-relaxed">
             {user.bio || `"Collector of moments, leaves notes where I go. Seeking the things we never said."`}
           </p>
@@ -201,8 +208,13 @@ export default function ProfilePage() {
             />
             {/* Gradient Overlay for Text */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            <h1 className="absolute bottom-6 left-6 text-4xl font-bold text-white font-sans tracking-tight">
+            <h1 className="absolute bottom-6 left-6 text-4xl font-bold text-white font-sans tracking-tight flex items-center gap-3">
               {user.name.split(' ')[0]}.
+              {user.plan === 'PRO' && (
+                <span className="bg-amber-500/90 text-white text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1 font-bold uppercase tracking-widest backdrop-blur-md shadow-sm border border-amber-400/50">
+                  <Crown size={12} strokeWidth={3} /> Pro
+                </span>
+              )}
             </h1>
           </div>
 
