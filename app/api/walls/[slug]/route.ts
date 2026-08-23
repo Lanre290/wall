@@ -21,8 +21,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     // Always resolve session to determine creator status
     const session = await getSessionUser();
     const isCreator = !!(session && session.userId === wall.getDataValue('creatorId'));
+    
+    let visitorPlan = 'FREE';
+    if (session) {
+      const user = await User.findByPk(session.userId, { attributes: ['plan'] });
+      if (user) {
+        visitorPlan = user.getDataValue('plan');
+      }
+    }
 
-    return NextResponse.json({ wall, isCreator });
+    return NextResponse.json({ wall, isCreator, visitorPlan });
   } catch (error) {
     console.error('GET wall error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

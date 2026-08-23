@@ -50,6 +50,10 @@ User.init({
   socialLinks: {
     type: DataTypes.JSONB,
     defaultValue: {},
+  },
+  plan: {
+    type: DataTypes.ENUM('FREE', 'PRO'),
+    defaultValue: 'FREE',
   }
 }, { sequelize, modelName: 'User' });
 

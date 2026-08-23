@@ -63,6 +63,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
+    // Enforce Pro plan limits
+    if (privacy === 'PRIVATE') {
+      const { User } = require('../../../lib/sequelize');
+      const user = await User.findByPk(session.userId, { attributes: ['plan'] });
+      const plan = user?.getDataValue('plan') || 'FREE';
+
+      if (plan === 'FREE') {
+        const privateWallCount = await Wall.count({
+          where: { creatorId: session.userId, privacy: 'PRIVATE' }
+        });
+        if (privateWallCount >= 1) {
+          return NextResponse.json({ 
+            error: 'Free plan is limited to 1 private wall. Please upgrade to Pro to create more.' 
+          }, { status: 403 });
+        }
+      }
+    }
+
     const newWall = await Wall.create({
       slug: generateSlug(title),
       title,

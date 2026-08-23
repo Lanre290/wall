@@ -70,11 +70,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     const body = await req.json();
     const { text, color, font, isAnonymous } = body;
 
-    if (!text || text.length > 300) {
-      return NextResponse.json({ error: 'Text is required and must be under 300 characters' }, { status: 400 });
+    const session = await getSessionUser();
+
+    // Fetch user plan
+    let userPlan = 'FREE';
+    if (session) {
+      const user = await User.findByPk(session.userId, { attributes: ['plan'] });
+      if (user) userPlan = user.getDataValue('plan');
     }
 
-    const session = await getSessionUser();
+    if (userPlan === 'FREE') {
+      if (!text || text.length > 200) {
+        return NextResponse.json({ error: 'Free plan notes are limited to 200 characters' }, { status: 403 });
+      }
+
+      const premiumColors = ['bg-[#DFE4F2]', 'bg-[#F3CAD9]', 'bg-[#EAEAC2]', 'bg-[#E6E4E6]'].slice(2);
+      if (color && premiumColors.includes(color)) {
+        return NextResponse.json({ error: 'This color requires the Pro plan' }, { status: 403 });
+      }
+
+      if (font && font !== 'font-sans') {
+        return NextResponse.json({ error: 'Handwriting fonts require the Pro plan' }, { status: 403 });
+      }
+    } else {
+      if (!text || text.length > 5000) {
+        return NextResponse.json({ error: 'Text is required and must be under 5000 characters' }, { status: 400 });
+      }
+    }
 
     // Enforce wall anonymity settings
     if (!wall.getDataValue('allowAnonymous') && !session) {

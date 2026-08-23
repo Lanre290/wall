@@ -5,7 +5,7 @@ import { BottomNav } from "../components/BottomNav";
 import { 
   Settings, User, Pencil, Heart, FileText, Compass, 
   UserCog, Shield, HelpCircle, ChevronRight, LogOut, 
-  Link2, Mail, Share2, Loader2, Sparkles 
+  Link2, Mail, Share2, Loader2, Sparkles, Crown 
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -318,14 +318,20 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Tags <span className="normal-case font-normal">(comma separated)</span></label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  Tags <span className="normal-case font-normal">(comma separated)</span>
+                  {user.plan === 'FREE' && <Crown size={12} className="text-amber-500 ml-1" />}
+                </label>
                 <input
                   type="text"
                   value={editForm.tagsInput}
                   onChange={e => setEditForm(f => ({ ...f, tagsInput: e.target.value }))}
                   placeholder="Design, Curation, Art..."
-                  className="w-full bg-[#F6F5F2] rounded-xl px-4 py-3 text-sm font-medium text-[#111] outline-none focus:ring-2 focus:ring-[#0A1118]/20"
+                  disabled={user.plan === 'FREE'}
+                  title={user.plan === 'FREE' ? "Upgrade to Pro to add custom tags" : ""}
+                  className={`w-full bg-[#F6F5F2] rounded-xl px-4 py-3 text-sm font-medium text-[#111] outline-none focus:ring-2 focus:ring-[#0A1118]/20 ${user.plan === 'FREE' ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
+                {user.plan === 'FREE' && <p className="text-[10px] text-amber-600 mt-1">Unlock full profile customization with Pro.</p>}
               </div>
             </div>
 

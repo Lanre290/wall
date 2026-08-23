@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { BottomNav } from "../../components/BottomNav";
-import { Share, MoreHorizontal, PenSquare, X, LayoutGrid, Compass, Info, Copy, Download, Loader2 } from "lucide-react";
+import { Share, MoreHorizontal, PenSquare, X, LayoutGrid, Compass, Info, Copy, Download, Loader2, Crown } from "lucide-react";
 
 type Note = {
   id: number;
@@ -99,6 +99,7 @@ export default function WallClient({ slug }: { slug: string }) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreator, setIsCreator] = useState(false);
+  const [userPlan, setUserPlan] = useState('FREE');
   const [submitted, setSubmitted] = useState(false); // for private inbox confirmation
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -167,6 +168,7 @@ export default function WallClient({ slug }: { slug: string }) {
           const wallData = await wallRes.json();
           setWall(wallData.wall);
           setIsCreator(wallData.isCreator);
+          setUserPlan(wallData.visitorPlan || 'FREE');
 
           // If private wall and not the creator, open the inbox modal immediately
           if (wallData.wall.privacy === 'PRIVATE' && !wallData.isCreator) {
@@ -287,6 +289,9 @@ export default function WallClient({ slug }: { slug: string }) {
         setIsAnonymous(true);
         setSelectedColor(0);
         setSelectedFont(0);
+      } else {
+        const errData = await res.json();
+        alert(errData.error || 'Failed to post note');
       }
     } catch (error) {
       console.error("Failed to post note", error);
@@ -440,7 +445,7 @@ export default function WallClient({ slug }: { slug: string }) {
               <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[300px] flex flex-col`}>
                 <textarea
                   value={newText}
-                  onChange={(e) => setNewText(e.target.value.slice(0, 300))}
+                  onChange={(e) => setNewText(e.target.value.slice(0, userPlan === 'PRO' ? 5000 : 200))}
                   placeholder="Write anything..."
                   className={`w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont], 'lg')}`}
                   autoFocus
@@ -448,35 +453,51 @@ export default function WallClient({ slug }: { slug: string }) {
                 
                 <div className="flex flex-col gap-3 mt-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Font</span>
-                    <div className="flex gap-2">
-                      {fontOptions.map((font, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setSelectedFont(idx)}
-                          className={`w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
-                            selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
-                          } ${getHandwritingClass(font, 'sm')}`}
-                          aria-label={`Select font ${idx}`}
-                        >
-                          Ag
-                        </button>
-                      ))}
+                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Font</span>
+                    <div className="flex gap-2 relative">
+                      {fontOptions.map((font, idx) => {
+                        const isPremium = idx > 0;
+                        const isLocked = userPlan === 'FREE' && isPremium;
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => !isLocked && setSelectedFont(idx)}
+                            disabled={isLocked}
+                            title={isLocked ? "Pro Plan Required" : ""}
+                            className={`relative w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
+                              selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
+                            } ${getHandwritingClass(font, 'sm')} ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            aria-label={`Select font ${idx}`}
+                          >
+                            Ag
+                            {isLocked && <Crown size={10} className="absolute -top-1.5 -right-1.5 text-amber-500 drop-shadow-sm" />}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Color</span>
+                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Color</span>
                       <div className="flex gap-2">
-                        {colors.map((color, idx) => (
-                          <button key={idx} onClick={() => setSelectedColor(idx)}
-                            className={`w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all`}
-                          />
-                        ))}
+                        {colors.map((color, idx) => {
+                          const isPremium = idx > 1;
+                          const isLocked = userPlan === 'FREE' && isPremium;
+                          return (
+                            <button key={idx} 
+                              onClick={() => !isLocked && setSelectedColor(idx)}
+                              disabled={isLocked}
+                              title={isLocked ? "Pro Plan Required" : ""}
+                              className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            >
+                              {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
-                    <span className="text-gray-500/70 text-sm font-medium">{newText.length}/300</span>
+                    <span className="text-gray-500/70 text-sm font-medium">{newText.length}/{userPlan === 'PRO' ? '∞' : '200'}</span>
                   </div>
                 </div>
               </div>
@@ -614,7 +635,19 @@ export default function WallClient({ slug }: { slug: string }) {
                 {note.text}
               </p>
               <div className="flex items-center justify-between select-none">
-                <span className="text-gray-500">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</span>
+                <span className="text-gray-500 relative flex items-center gap-1 group">
+                  — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
+                  
+                  {/* Who Sent This? Hint (Only for creator) */}
+                  {isCreator && note.isAnonymous && (
+                    <span 
+                      className={`ml-1 cursor-help transition-all ${userPlan === 'PRO' ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                      title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
+                    >
+                      <Crown size={12} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
+                    </span>
+                  )}
+                </span>
                 <button 
                   onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking heart
                   onClick={() => handleHeart(note.id)} 
@@ -649,7 +682,17 @@ export default function WallClient({ slug }: { slug: string }) {
                 >
                   <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</p>
+                    <p className="text-gray-500 text-xs flex items-center gap-1 group">
+                      — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
+                      {isCreator && note.isAnonymous && (
+                        <span 
+                          className={`cursor-help transition-all ${userPlan === 'PRO' ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                          title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
+                        >
+                          <Crown size={10} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
+                        </span>
+                      )}
+                    </p>
                     <div className="flex items-center gap-1 text-gray-500">
                       <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-red-400">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -669,7 +712,17 @@ export default function WallClient({ slug }: { slug: string }) {
                 >
                   <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-gray-500 text-xs">— {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}</p>
+                    <p className="text-gray-500 text-xs flex items-center gap-1 group">
+                      — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
+                      {isCreator && note.isAnonymous && (
+                        <span 
+                          className={`cursor-help transition-all ${userPlan === 'PRO' ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                          title={userPlan === 'PRO' ? `Hint: Originally authored by ${note.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
+                        >
+                          <Crown size={10} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
+                        </span>
+                      )}
+                    </p>
                     <div className="flex items-center gap-1 text-gray-500">
                       <svg viewBox="0 0 24 24" fill={note.heartsCount ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-red-400">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -706,8 +759,16 @@ export default function WallClient({ slug }: { slug: string }) {
               <p className={`text-gray-900 leading-relaxed mb-10 ${getHandwritingClass(selectedNote.font, 'xl')}`}>
                 {selectedNote.text}
               </p>
-              <p className="text-gray-600 text-base font-sans">
+              <p className="text-gray-600 text-base font-sans flex items-center gap-2">
                 — {selectedNote.isAnonymous ? "Anonymous" : (selectedNote.authorName ?? "Someone")}
+                {isCreator && selectedNote.isAnonymous && (
+                  <span 
+                    className={`cursor-help transition-all ${userPlan === 'PRO' ? 'text-amber-600' : 'text-gray-400 hover:text-amber-500'}`}
+                    title={userPlan === 'PRO' ? `Hint: Originally authored by ${selectedNote.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
+                  >
+                    <Crown size={14} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
+                  </span>
+                )}
               </p>
             </div>
 
@@ -768,7 +829,7 @@ export default function WallClient({ slug }: { slug: string }) {
             <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[300px] flex flex-col relative`}>
               <textarea
                 value={newText}
-                onChange={(e) => setNewText(e.target.value.slice(0, 300))}
+                onChange={(e) => setNewText(e.target.value.slice(0, userPlan === 'PRO' ? 5000 : 200))}
                 placeholder="Write anything..."
                 className={`w-full h-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont], 'lg')}`}
                 autoFocus
@@ -776,41 +837,56 @@ export default function WallClient({ slug }: { slug: string }) {
               
               <div className="flex flex-col gap-3 mt-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Font</span>
-                  <div className="flex gap-2">
-                    {fontOptions.map((font, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedFont(idx)}
-                        className={`w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
-                          selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
-                        } ${getHandwritingClass(font, 'sm')}`}
-                        aria-label={`Select font ${idx}`}
-                      >
-                        Ag
-                      </button>
-                    ))}
+                  <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Font</span>
+                  <div className="flex gap-2 relative">
+                    {fontOptions.map((font, idx) => {
+                      const isPremium = idx > 0;
+                      const isLocked = userPlan === 'FREE' && isPremium;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => !isLocked && setSelectedFont(idx)}
+                          disabled={isLocked}
+                          title={isLocked ? "Pro Plan Required" : ""}
+                          className={`relative w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
+                            selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
+                          } ${getHandwritingClass(font, 'sm')} ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
+                          aria-label={`Select font ${idx}`}
+                        >
+                          Ag
+                          {isLocked && <Crown size={10} className="absolute -top-1.5 -right-1.5 text-amber-500 drop-shadow-sm" />}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12">Color</span>
-                    <div className="flex gap-2">
-                      {colors.map((color, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setSelectedColor(idx)}
-                          className={`w-5 h-5 rounded-full ${color.bg} border-2 ${
-                            selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
-                          } shadow-sm transition-all`}
-                          aria-label={`Select color ${idx}`}
-                        />
-                      ))}
+                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Color</span>
+                    <div className="flex gap-2 relative">
+                      {colors.map((color, idx) => {
+                        const isPremium = idx > 1;
+                        const isLocked = userPlan === 'FREE' && isPremium;
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => !isLocked && setSelectedColor(idx)}
+                            disabled={isLocked}
+                            title={isLocked ? "Pro Plan Required" : ""}
+                            className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${
+                              selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
+                            } shadow-sm transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
+                            aria-label={`Select color ${idx}`}
+                          >
+                            {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                   <div className="text-gray-500/70 text-sm font-medium">
-                    {newText.length}/300
+                    {newText.length}/{userPlan === 'PRO' ? '∞' : '200'}
                   </div>
                 </div>
               </div>

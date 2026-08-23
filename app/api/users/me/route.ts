@@ -61,7 +61,7 @@ export async function PATCH(req: Request) {
     await user.update({
       name: name !== undefined ? name.trim() : user.getDataValue('name'),
       bio: bio !== undefined ? bio.trim() : user.getDataValue('bio'),
-      tags: tags !== undefined ? tags : user.getDataValue('tags'),
+      tags: tags !== undefined && user.getDataValue('plan') === 'PRO' ? tags : user.getDataValue('tags'),
     });
 
     return NextResponse.json({ user });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, Lock, ArrowRight } from "lucide-react";
+import { Globe, Lock, ArrowRight, Crown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function CreateWallPage() {
@@ -12,12 +12,14 @@ export default function CreateWallPage() {
   const [anonymousNotes, setAnonymousNotes] = useState(true);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!wallName.trim()) return;
 
     setIsLoading(true);
+    setErrorMsg("");
     try {
       const res = await fetch("/api/walls", {
         method: "POST",
@@ -35,9 +37,13 @@ export default function CreateWallPage() {
         router.push(`/wall/${data.wall.slug}`);
       } else if (res.status === 401) {
         router.push("/login");
+      } else {
+        const data = await res.json();
+        setErrorMsg(data.error || "Failed to create wall");
       }
     } catch (error) {
       console.error("Failed to create wall", error);
+      setErrorMsg("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -113,12 +119,15 @@ export default function CreateWallPage() {
 
               <div 
                 onClick={() => setPrivacy("private")}
-                className={`flex flex-col gap-2 p-5 rounded-xl cursor-pointer transition-colors border ${
+                className={`relative flex flex-col gap-2 p-5 rounded-xl cursor-pointer transition-colors border ${
                   privacy === "private" 
                     ? "bg-[#2A313C] border-transparent text-white" 
                     : "bg-[#F3F2EE] border-transparent text-gray-900 hover:bg-[#EAE9E4]"
                 }`}
               >
+                <span className="absolute -top-2 -right-2 text-amber-500 bg-white rounded-full p-1 shadow-sm border border-gray-100">
+                  <Crown size={14} strokeWidth={3} />
+                </span>
                 <div className="flex items-center gap-2 font-semibold">
                   <Lock size={18} />
                   <span>Private</span>
@@ -129,6 +138,15 @@ export default function CreateWallPage() {
               </div>
             </div>
           </div>
+
+          {errorMsg && (
+            <div className="mb-8 p-4 bg-red-50 text-red-700 text-sm font-medium rounded-2xl border border-red-100 flex flex-col gap-2">
+              <p>{errorMsg}</p>
+              {errorMsg.includes("upgrade to Pro") && (
+                <a href="/pro" className="text-red-800 underline font-bold mt-1 inline-block">View Pro Plan</a>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-between p-5 bg-[#F3F2EE] rounded-xl">
             <div className="flex flex-col">
@@ -152,16 +170,17 @@ export default function CreateWallPage() {
             </button>
           </div>
 
-          <div className="flex justify-end pt-4">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="bg-[#0A1118] text-white px-8 py-3.5 rounded-full font-medium flex items-center gap-2 hover:bg-black transition-colors w-full md:w-auto justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isLoading ? "Creating..." : "Create wall"}
-              {!isLoading && <ArrowRight size={18} />}
-            </button>
-          </div>
+          <button 
+            type="submit"
+            disabled={isLoading || !wallName.trim()}
+            className="w-full bg-[#0A1118] text-white py-4 md:py-5 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-[0.98]"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>Create wall <ArrowRight size={18} /></>
+            )}
+          </button>
         </div>
       </form>
     </div>
