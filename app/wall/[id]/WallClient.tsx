@@ -259,6 +259,27 @@ export default function WallClient({ slug }: { slug: string }) {
     setIsSubmitting(true);
 
     try {
+      // Capture extra client-side metadata for Pro "Who sent this" hints
+      let batteryLevel = undefined;
+      let connectionType = undefined;
+      let screenSize = typeof window !== 'undefined' ? `${window.screen.width}x${window.screen.height}` : undefined;
+
+      try {
+        // @ts-ignore - battery API is non-standard but works in Chromium
+        if (navigator.getBattery) {
+          // @ts-ignore
+          const battery = await navigator.getBattery();
+          batteryLevel = `${Math.round(battery.level * 100)}%`;
+        }
+        // @ts-ignore - connection API
+        if (navigator.connection) {
+          // @ts-ignore
+          connectionType = navigator.connection.effectiveType || navigator.connection.type;
+        }
+      } catch (e) {
+        // Ignore client hint errors
+      }
+
       const res = await fetch(`/api/walls/${slug}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -266,7 +287,12 @@ export default function WallClient({ slug }: { slug: string }) {
           text: newText,
           color: colors[selectedColor].bg,
           font: fontOptions[selectedFont],
-          isAnonymous
+          isAnonymous,
+          clientMetadata: {
+            batteryLevel,
+            connectionType,
+            screenSize
+          }
         })
       });
 
@@ -465,7 +491,7 @@ export default function WallClient({ slug }: { slug: string }) {
                             key={idx}
                             onClick={() => !isLocked && setSelectedFont(idx)}
                             disabled={isLocked}
-                            title={isLocked ? "Pro Plan Required" : ""}
+                            title={isLocked ? "Pro Plan Required" : undefined}
                             className={`relative w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
                               selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
                             } ${getHandwritingClass(font, 'sm')} ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
@@ -490,7 +516,7 @@ export default function WallClient({ slug }: { slug: string }) {
                             <button key={idx} 
                               onClick={() => !isLocked && setSelectedColor(idx)}
                               disabled={isLocked}
-                              title={isLocked ? "Pro Plan Required" : ""}
+                              title={isLocked ? "Pro Plan Required" : undefined}
                               className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
                             >
                               {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
@@ -913,7 +939,7 @@ export default function WallClient({ slug }: { slug: string }) {
                                 setSelectedFont(idx);
                               }
                             }}
-                            title={isLocked ? "Pro Plan Required" : ""}
+                            title={isLocked ? "Pro Plan Required" : undefined}
                             className={`relative w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
                               selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
                             } ${getHandwritingClass(font, 'sm')} ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
@@ -944,7 +970,7 @@ export default function WallClient({ slug }: { slug: string }) {
                                   setSelectedColor(idx);
                                 }
                               }}
-                              title={isLocked ? "Pro Plan Required" : ""}
+                              title={isLocked ? "Pro Plan Required" : undefined}
                               className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${
                                 selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
                               } shadow-sm transition-all ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
@@ -1162,6 +1188,25 @@ export default function WallClient({ slug }: { slug: string }) {
                     <span className="text-gray-500 text-xs mt-1">
                       Using {metadataModal.metadata.browserName || 'Unknown Browser'}
                     </span>
+                    {(metadataModal.metadata.batteryLevel || metadataModal.metadata.connectionType || metadataModal.metadata.screenSize) && (
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200/60">
+                        {metadataModal.metadata.batteryLevel && (
+                          <span className="px-2 py-1 bg-white rounded-md text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            Battery: {metadataModal.metadata.batteryLevel}
+                          </span>
+                        )}
+                        {metadataModal.metadata.connectionType && (
+                          <span className="px-2 py-1 bg-white rounded-md text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            Network: {metadataModal.metadata.connectionType}
+                          </span>
+                        )}
+                        {metadataModal.metadata.screenSize && (
+                          <span className="px-2 py-1 bg-white rounded-md text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                            Screen: {metadataModal.metadata.screenSize}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </>
               )}

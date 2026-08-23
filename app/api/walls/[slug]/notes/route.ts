@@ -89,7 +89,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
         return NextResponse.json({ error: 'Free plan notes are limited to 200 characters' }, { status: 403 });
       }
 
-      const premiumColors = ['bg-[#DFE4F2]', 'bg-[#F3CAD9]', 'bg-[#EAEAC2]', 'bg-[#E6E4E6]'].slice(2);
+      const premiumColors = ['bg-[#F3CAD9]', 'bg-[#E6E4E6]'];
       if (color && premiumColors.includes(color)) {
         return NextResponse.json({ error: 'This color requires the Pro plan' }, { status: 403 });
       }
