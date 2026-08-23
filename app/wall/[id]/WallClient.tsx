@@ -802,20 +802,6 @@ export default function WallClient({ slug }: { slug: string }) {
               </p>
               <p className="text-gray-600 text-base font-sans flex items-center gap-2">
                 — {selectedNote.isAnonymous ? "Anonymous" : (selectedNote.authorName ?? "Someone")}
-                {isCreator && selectedNote.isAnonymous && (
-                  <span 
-                    onClick={(e) => {
-                      if (userPlan === 'FREE') {
-                        e.stopPropagation();
-                        window.open('/pro', '_blank');
-                      }
-                    }}
-                    className={`transition-all ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
-                    title={userPlan === 'PRO' ? `Hint: Originally authored by ${selectedNote.authorName || 'a guest visitor'}` : 'Upgrade to Pro to see who sent this'}
-                  >
-                    <Crown size={14} strokeWidth={userPlan === 'PRO' ? 3 : 2} />
-                  </span>
-                )}
               </p>
             </div>
 
@@ -833,6 +819,34 @@ export default function WallClient({ slug }: { slug: string }) {
                 </svg>
                 {selectedNote.heartsCount || 0} appreciations
               </button>
+              
+              {/* Mobile Who Sent This Trigger */}
+              {isCreator && selectedNote.isAnonymous && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (userPlan === 'FREE') {
+                      window.open('/pro', '_blank');
+                    } else {
+                      setSelectedNote(null);
+                      setTimeout(() => setMetadataModal(selectedNote), 100);
+                    }
+                  }}
+                  className={`w-full mt-3 py-3.5 rounded-full border border-black/10 flex items-center justify-center gap-2 font-semibold text-sm active:scale-95 transition-transform ${userPlan === 'PRO' ? 'text-amber-700 bg-amber-50' : 'text-gray-600 bg-white'}`}
+                >
+                  {userPlan === 'PRO' ? (
+                    <>
+                      <HelpCircle size={16} strokeWidth={2.5} />
+                      View Author Insights
+                    </>
+                  ) : (
+                    <>
+                      <Crown size={16} strokeWidth={2.5} className="text-gray-400" />
+                      Who sent this?
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
