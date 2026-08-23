@@ -136,6 +136,36 @@ export default function WallClient({ slug }: { slug: string }) {
   }, [slug]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [wallSettings, setWallSettings] = useState({ privacy: 'PUBLIC', allowAnonymous: true });
+
+  // Sync wallSettings when wall loads
+  useEffect(() => {
+    if (wall) {
+      setWallSettings({ privacy: wall.privacy, allowAnonymous: wall.allowAnonymous });
+    }
+  }, [wall]);
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const res = await fetch(`/api/walls/${slug}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(wallSettings),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWall((prev: any) => ({ ...prev, ...data.wall.dataValues ?? wallSettings }));
+        setIsSettingsOpen(false);
+      }
+    } catch (err) {
+      console.error('Failed to save settings', err);
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   const handleAddNote = async () => {
     if (!newText.trim() || !wall || isSubmitting) return;
@@ -386,11 +416,85 @@ export default function WallClient({ slug }: { slug: string }) {
           >
             <Share size={20} className="text-gray-700" />
           </button>
-          <button className="w-12 h-12 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-            <MoreHorizontal size={20} className="text-gray-700" />
-          </button>
+          {isCreator && (
+            <div className="relative">
+              <button
+                onClick={() => setIsSettingsOpen(v => !v)}
+                className="w-12 h-12 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <MoreHorizontal size={20} className="text-gray-700" />
+              </button>
+
+              {/* Settings Dropdown */}
+              {isSettingsOpen && (
+                <div className="absolute right-0 top-14 md:top-12 z-50 bg-white rounded-2xl shadow-xl border border-gray-100 p-5 w-72">
+                  <h3 className="font-playfair text-lg font-bold text-[#111] mb-4">Wall Settings</h3>
+
+                  {/* Privacy Toggle */}
+                  <div className="mb-4">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Visibility</p>
+                    <div className="flex bg-[#F3F2EE] rounded-full p-1">
+                      <button
+                        onClick={() => setWallSettings(s => ({ ...s, privacy: 'PUBLIC' }))}
+                        className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${wallSettings.privacy === 'PUBLIC' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
+                      >
+                        🌍 Public
+                      </button>
+                      <button
+                        onClick={() => setWallSettings(s => ({ ...s, privacy: 'PRIVATE' }))}
+                        className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${wallSettings.privacy === 'PRIVATE' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
+                      >
+                        🔒 Private
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+                      {wallSettings.privacy === 'PRIVATE'
+                        ? 'Visitors can leave messages but cannot read the wall. Only you see the notes.'
+                        : 'Anyone with the link can view and leave notes on this wall.'}
+                    </p>
+                  </div>
+
+                  {/* Anonymous Toggle */}
+                  <div className="mb-5">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Anonymous notes</p>
+                    <button
+                      onClick={() => setWallSettings(s => ({ ...s, allowAnonymous: !s.allowAnonymous }))}
+                      className="flex items-center justify-between w-full bg-[#F3F2EE] rounded-xl px-4 py-3"
+                    >
+                      <span className="text-sm font-medium text-[#111]">Allow anonymous posting</span>
+                      <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${wallSettings.allowAnonymous ? 'bg-[#0A1118]' : 'bg-gray-300'}`}>
+                        <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${wallSettings.allowAnonymous ? 'translate-x-4' : 'translate-x-0'}`} />
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsSettingsOpen(false)}
+                      className="flex-1 py-2.5 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveSettings}
+                      disabled={isSavingSettings}
+                      className="flex-1 py-2.5 rounded-full text-sm font-semibold bg-[#0A1118] text-white hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                    >
+                      {isSavingSettings ? <Loader2 size={14} className="animate-spin" /> : null}
+                      {isSavingSettings ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Click-away to close settings */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setIsSettingsOpen(false)} />
+      )}
 
       {/* Desktop Canvas */}
       <div 
