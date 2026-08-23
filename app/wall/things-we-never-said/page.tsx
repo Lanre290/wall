@@ -35,6 +35,7 @@ export default function ThingsWeNeverSaidPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newText, setNewText] = useState("");
   const [selectedColor, setSelectedColor] = useState(0);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -215,38 +216,93 @@ export default function ThingsWeNeverSaidPage() {
         <div className="flex gap-4 items-start">
           <div className="flex flex-col gap-4 flex-1">
             {leftColumnNotes.map(note => (
-              <div key={note.id} className={`p-5 rounded-lg shadow-sm w-full ${note.color}`}>
-                <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium">{note.text}</p>
+              <button
+                key={note.id}
+                onClick={() => setSelectedNote(note)}
+                className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
+              >
+                <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium line-clamp-4">{note.text}</p>
                 <div className="flex items-center justify-between">
                   <p className="text-gray-500 text-xs">— Anonymous</p>
-                  <button onClick={() => handleHeart(note.id)} className="flex items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors">
+                  <div className="flex items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                     <span className="text-[10px] font-medium">{note.heartsCount}</span>
-                  </button>
+                  </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
           <div className="flex flex-col gap-4 flex-1">
             {rightColumnNotes.map(note => (
-              <div key={note.id} className={`p-5 rounded-lg shadow-sm w-full ${note.color}`}>
-                <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium">{note.text}</p>
+              <button
+                key={note.id}
+                onClick={() => setSelectedNote(note)}
+                className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
+              >
+                <p className="text-gray-900 text-[15px] mb-4 leading-relaxed font-medium line-clamp-4">{note.text}</p>
                 <div className="flex items-center justify-between">
                   <p className="text-gray-500 text-xs">— Anonymous</p>
-                  <button onClick={() => handleHeart(note.id)} className="flex items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors">
+                  <div className="flex items-center gap-1 text-red-400/70 hover:text-red-400 transition-colors">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                     <span className="text-[10px] font-medium">{note.heartsCount}</span>
-                  </button>
+                  </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Mobile Fullscreen Note View */}
+      {selectedNote && (
+        <div className="md:hidden fixed inset-0 z-[60] flex flex-col" style={{ backgroundColor: selectedNote.color.replace('bg-', '') }}>
+          {/* Use inline style trick — extract actual hex from tailwind class */}
+          <div className={`fixed inset-0 z-[60] flex flex-col ${selectedNote.color}`}>
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-5 pt-12 pb-4">
+              <button
+                onClick={() => setSelectedNote(null)}
+                className="w-10 h-10 rounded-full bg-black/10 flex items-center justify-center"
+              >
+                <X size={20} className="text-gray-800" />
+              </button>
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Note</span>
+              <div className="w-10" />
+            </div>
+
+            {/* Note content */}
+            <div className="flex-1 flex flex-col justify-center px-8 pb-8">
+              <p className="font-playfair text-2xl font-medium text-gray-900 leading-relaxed mb-10">
+                {selectedNote.text}
+              </p>
+              <p className="text-gray-600 text-base">
+                — {selectedNote.isAnonymous ? "Anonymous" : "Someone"}
+              </p>
+            </div>
+
+            {/* Heart button at bottom */}
+            <div className="px-8 pb-32">
+              <button
+                onClick={() => {
+                  handleHeart(selectedNote.id);
+                  setSelectedNote(prev => prev ? { ...prev, heartsCount: (prev.heartsCount || 0) + 1 } : prev);
+                }}
+                className="w-full py-4 rounded-full bg-black/10 flex items-center justify-center gap-3 text-gray-800 font-semibold text-base active:scale-95 transition-transform"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-500">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                {selectedNote.heartsCount || 0} appreciations
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Leave a Note FAB */}
       <div className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-20">

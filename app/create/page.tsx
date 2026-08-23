@@ -8,7 +8,7 @@ export default function CreateWallPage() {
   const router = useRouter();
   const [wallName, setWallName] = useState("");
   const [description, setDescription] = useState("");
-  const [privacy, setPrivacy] = useState<"anyone" | "private">("anyone");
+  const [privacy, setPrivacy] = useState<"anyone" | "private">("private");
   const [anonymousNotes, setAnonymousNotes] = useState(true);
 
   const [isLoading, setIsLoading] = useState(false);
