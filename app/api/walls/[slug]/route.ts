@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../../lib/auth';
-import { Wall, User } from '../../../../lib/sequelize';
+import { Wall, User, ensureSchema } from '../../../../lib/sequelize';
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    await ensureSchema();
     const { slug } = await params;
 
     let wall = await Wall.findOne({
@@ -58,6 +59,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
       description: body.description !== undefined ? body.description : wall.getDataValue('description'),
       privacy: body.privacy !== undefined ? body.privacy : wall.getDataValue('privacy'),
       allowAnonymous: body.allowAnonymous !== undefined ? body.allowAnonymous : wall.getDataValue('allowAnonymous'),
+      requireApproval: body.requireApproval !== undefined ? body.requireApproval : wall.getDataValue('requireApproval'),
     });
 
     return NextResponse.json({ wall });

@@ -18,11 +18,9 @@ export async function Footer() {
       <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
         <p>© 2026 Wall Atelier. Built for thinkers.</p>
         <div className="flex items-center gap-6">
-          {!isPro && (
-            <Link href="/pro" className="flex items-center gap-1 font-medium text-amber-600 hover:text-amber-700 transition-colors">
-              ✨ Pro
-            </Link>
-          )}
+          <Link href="/pricing" className="flex items-center gap-1 font-medium text-amber-600 hover:text-amber-700 transition-colors">
+            ✨ Pricing
+          </Link>
           <Link href="/terms" target="_blank" className="hover:text-black transition-colors">Terms</Link>
           <Link href="/privacy" target="_blank" className="hover:text-black transition-colors">Privacy</Link>
         </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display, Caveat, Kalam, Patrick_Hand } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display, Caveat, Kalam, Patrick_Hand, Dancing_Script, Indie_Flower, Shadows_Into_Light } from "next/font/google";
 import "./globals.css";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
@@ -33,6 +33,23 @@ const kalam = Kalam({
 
 const patrickHand = Patrick_Hand({
   variable: "--font-patrick-hand",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const dancingScript = Dancing_Script({
+  variable: "--font-dancing-script",
+  subsets: ["latin"],
+});
+
+const indieFlower = Indie_Flower({
+  variable: "--font-indie-flower",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const shadowsIntoLight = Shadows_Into_Light({
+  variable: "--font-shadows-into-light",
   subsets: ["latin"],
   weight: ["400"],
 });
@@ -87,7 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${caveat.variable} ${kalam.variable} ${patrickHand.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${caveat.variable} ${kalam.variable} ${patrickHand.variable} ${dancingScript.variable} ${indieFlower.variable} ${shadowsIntoLight.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#FAF9F6] text-slate-900 font-sans relative overflow-x-hidden">
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>

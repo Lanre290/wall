@@ -166,9 +166,9 @@ export default function ProfilePage() {
             <ChevronRight size={16} className="text-gray-400" />
           </button>
           {user.plan !== 'PRO' && (
-            <Link href="/pro" className="flex items-center gap-4 p-4 border-b border-gray-200/50">
+            <Link href="/pricing" className="flex items-center gap-4 p-4 border-b border-gray-200/50">
               <div className="w-8 h-8 bg-[#0A1118] text-white rounded-full flex items-center justify-center shadow-sm"><Sparkles size={16} /></div>
-              <span className="font-medium text-[#111] flex-1 text-sm">Upgrade to Pro</span>
+              <span className="font-medium text-[#111] flex-1 text-sm">Upgrade Plan</span>
               <ChevronRight size={16} className="text-gray-400" />
             </Link>
           )}
@@ -244,10 +244,10 @@ export default function ProfilePage() {
 
           {user.plan !== 'PRO' && (
             <Link 
-              href="/pro"
+              href="/pricing"
               className="w-full bg-[#EBE9E2] text-gray-700 py-3.5 rounded-full text-sm font-semibold hover:bg-[#E2E0D8] transition-colors mb-8 shadow-sm flex items-center justify-center gap-2"
             >
-              <Sparkles size={16} /> Upgrade to Pro
+              <Sparkles size={16} /> Upgrade Plan
             </Link>
           )}
 
@@ -334,7 +334,7 @@ export default function ProfilePage() {
                   value={editForm.tagsInput}
                   onChange={e => setEditForm(f => ({ ...f, tagsInput: e.target.value }))}
                   onClick={() => {
-                    if (user.plan === 'FREE') window.open('/pro', '_blank');
+                    if (user.plan === 'FREE') window.open('/pricing', '_blank');
                   }}
                   readOnly={user.plan === 'FREE'}
                   placeholder="Design, Curation, Art..."

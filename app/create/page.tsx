@@ -13,6 +13,7 @@ export default function CreateWallPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [showUpsell, setShowUpsell] = useState<string | null>(null);
   
   const [publicWallsLeft, setPublicWallsLeft] = useState<number | null>(null);
   const [isPro, setIsPro] = useState(false);
@@ -58,7 +59,11 @@ export default function CreateWallPage() {
 
       if (res.ok) {
         const data = await res.json();
-        router.push(`/wall/${data.wall.slug}`);
+        if (!isPro) {
+          setShowUpsell(data.wall.slug);
+        } else {
+          router.push(`/wall/${data.wall.slug}`);
+        }
       } else if (res.status === 401) {
         router.push("/login");
       } else {
@@ -176,7 +181,7 @@ export default function CreateWallPage() {
             <div className="mb-8 p-4 bg-red-50 text-red-700 text-sm font-medium rounded-2xl border border-red-100 flex flex-col gap-2">
               <p>{errorMsg}</p>
               {errorMsg.includes("upgrade to Pro") && (
-                <a href="/pro" className="text-red-800 underline font-bold mt-1 inline-block">View Pro Plan</a>
+                <a href="/pricing" className="text-red-800 underline font-bold mt-1 inline-block">View Pricing & Plans</a>
               )}
             </div>
           )}
@@ -216,6 +221,38 @@ export default function CreateWallPage() {
           </button>
         </div>
       </form>
+
+      {/* Upsell Modal */}
+      {showUpsell && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-white rounded-3xl p-8 md:p-10 w-full max-w-md mx-auto shadow-2xl text-center z-10 animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-amber-100 text-amber-500 flex items-center justify-center rounded-full mx-auto mb-6 shadow-sm border border-amber-200">
+              <Crown size={32} strokeWidth={2.5} />
+            </div>
+            
+            <h2 className="font-playfair text-3xl font-bold text-[#111] mb-3">Wall Created! 🎉</h2>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Your wall is ready to go! Upgrade with a <strong>Celebration Pass ($7)</strong> to unlock authentic handwritten fonts, premium themes, and downloadable keepsake memory books.
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => window.open('/pricing', '_blank')}
+                className="w-full bg-[#0A1118] text-white py-4 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg active:scale-[0.98]"
+              >
+                <Crown size={18} /> View Celebration Pass ($7)
+              </button>
+              <button
+                onClick={() => router.push(`/wall/${showUpsell}`)}
+                className="w-full bg-[#EAE9E4] text-[#111] py-4 rounded-full font-bold flex items-center justify-center hover:bg-[#E2E0D8] transition-all active:scale-[0.98]"
+              >
+                Skip and go to my wall
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

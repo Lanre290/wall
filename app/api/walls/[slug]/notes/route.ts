@@ -40,21 +40,36 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
     const isCreator = session && session.userId === wall.getDataValue('creatorId');
 
-    const formattedNotes = notes.map((note: any) => {
-      const plainNote = note.get({ plain: true });
-      return {
-        id: plainNote.id,
-        text: plainNote.text,
-        color: plainNote.color,
-        font: plainNote.font || 'font-sans',
-        isAnonymous: plainNote.isAnonymous,
-        authorId: plainNote.authorId,
-        authorName: plainNote.isAnonymous ? null : (plainNote.User?.name ?? null),
-        createdAt: plainNote.createdAt,
-        heartsCount: plainNote.Appreciations ? plainNote.Appreciations.length : 0,
-        metadata: isCreator ? plainNote.metadata : null,
-      };
-    });
+    const formattedNotes = notes
+      .filter((note: any) => {
+        const plainNote = note.get({ plain: true });
+        const status = plainNote.metadata?.status;
+        if (status === 'PENDING' && !isCreator) {
+          return false; // Hide pending notes from non-creators
+        }
+        if (status === 'REJECTED') {
+          return false; // Never show rejected notes
+        }
+        return true;
+      })
+      .map((note: any) => {
+        const plainNote = note.get({ plain: true });
+        const isPending = plainNote.metadata?.status === 'PENDING';
+        return {
+          id: plainNote.id,
+          text: plainNote.text,
+          color: plainNote.color,
+          font: plainNote.font || 'font-sans',
+          sticker: plainNote.metadata?.sticker || null,
+          isAnonymous: plainNote.isAnonymous,
+          authorId: plainNote.authorId,
+          authorName: plainNote.isAnonymous ? null : (plainNote.User?.name ?? null),
+          createdAt: plainNote.createdAt,
+          heartsCount: plainNote.Appreciations ? plainNote.Appreciations.length : 0,
+          metadata: isCreator ? plainNote.metadata : null,
+          isPending: isCreator ? isPending : false,
+        };
+      });
 
     return NextResponse.json({ notes: formattedNotes });
   } catch (error) {
@@ -73,7 +88,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     }
 
     const body = await req.json();
-    const { text, color, font, isAnonymous, clientMetadata } = body;
+    const { text, color, font, isAnonymous, clientMetadata, sticker } = body;
 
     const session = await getSessionUser();
 
@@ -89,6 +104,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
         return NextResponse.json({ error: 'Free plan notes are limited to 200 characters' }, { status: 403 });
       }
 
+      if (font === 'font-draw' || text.startsWith('data:image/')) {
+        return NextResponse.json({ error: 'Handwritten drawing requires a paid plan' }, { status: 403 });
+      }
+
       const premiumColors = ['bg-[#F3CAD9]', 'bg-[#E6E4E6]'];
       if (color && premiumColors.includes(color)) {
         return NextResponse.json({ error: 'This color requires the Pro plan' }, { status: 403 });
@@ -97,9 +116,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       if (font && font !== 'font-sans') {
         return NextResponse.json({ error: 'Handwriting fonts require the Pro plan' }, { status: 403 });
       }
+
+      if (sticker && sticker !== 'none') {
+        return NextResponse.json({ error: 'Decorative stickers require a paid plan' }, { status: 403 });
+      }
     } else {
-      if (!text || text.length > 5000) {
-        return NextResponse.json({ error: 'Text is required and must be under 5000 characters' }, { status: 400 });
+      const isDrawing = font === 'font-draw' || text.startsWith('data:image/');
+      const maxLength = isDrawing ? 1000000 : 5000;
+      if (!text || text.length > maxLength) {
+        return NextResponse.json({ error: `Note must be under ${maxLength} characters` }, { status: 400 });
       }
     }
 
@@ -132,9 +157,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       browserName: parsedDevice.browser.name || 'Unknown Browser',
     };
 
+    const requireApproval = !!wall.getDataValue('requireApproval');
+    const isCreatorPosting = !!(session && session.userId === wall.getDataValue('creatorId'));
+    const noteStatus = (requireApproval && !isCreatorPosting) ? 'PENDING' : 'APPROVED';
+
     const combinedMetadata = {
       ...serverMetadata,
-      ...(clientMetadata || {})
+      ...(clientMetadata || {}),
+      status: noteStatus,
+      sticker: sticker && sticker !== 'none' ? sticker : null
     };
 
     const newNote = await Note.create({
@@ -147,7 +178,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
       metadata: combinedMetadata,
     });
 
-    return NextResponse.json({ note: newNote }, { status: 201 });
+    return NextResponse.json({ 
+      note: {
+        ...newNote.get({ plain: true }),
+        sticker: combinedMetadata.sticker
+      }, 
+      isPending: noteStatus === 'PENDING' 
+    }, { status: 201 });
   } catch (error) {
     console.error('POST note error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

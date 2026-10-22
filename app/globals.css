@@ -7,6 +7,9 @@
   --font-caveat: var(--font-caveat), cursive;
   --font-kalam: var(--font-kalam), cursive;
   --font-patrick: var(--font-patrick-hand), cursive;
+  --font-dancing: var(--font-dancing-script), cursive;
+  --font-indie: var(--font-indie-flower), cursive;
+  --font-shadows: var(--font-shadows-into-light), cursive;
 }
 
 body {

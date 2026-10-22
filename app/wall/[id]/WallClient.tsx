@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { BottomNav } from "../../components/BottomNav";
-import { Share, MoreHorizontal, PenSquare, X, LayoutGrid, Compass, Info, Copy, Download, Loader2, Crown, HelpCircle } from "lucide-react";
+import { Share, MoreHorizontal, PenSquare, X, LayoutGrid, Compass, Info, Copy, Download, Loader2, Crown, HelpCircle, PenTool, Type, BookOpen, Printer, ShieldCheck, Check, Trash2, CheckCheck, Clock, Sparkles, QrCode } from "lucide-react";
+import { HandwritingCanvas } from "../../components/HandwritingCanvas";
+import { MemoryBookModal } from "../../components/MemoryBookModal";
+import { NoteSticker, STICKER_OPTIONS } from "../../components/NoteSticker";
+import { EventPrintKitModal } from "../../components/EventPrintKitModal";
 
 type Note = {
   id: number;
@@ -11,12 +15,14 @@ type Note = {
   authorName: string | null;
   color: string;
   font: string;
+  sticker?: string | null;
   x: number;
   y: number;
   rotate: number;
   isAnonymous: boolean;
   heartsCount?: number;
   metadata?: any;
+  isPending?: boolean;
 };
 
 type WallData = {
@@ -26,14 +32,17 @@ type WallData = {
   description: string;
   privacy: string;
   allowAnonymous: boolean;
+  requireApproval?: boolean;
+  createdAt?: string;
 };
 
-function SettingsContent({ wallSettings, setWallSettings, isSavingSettings, onSave, onCancel }: {
-  wallSettings: { privacy: string; allowAnonymous: boolean };
-  setWallSettings: React.Dispatch<React.SetStateAction<{ privacy: string; allowAnonymous: boolean }>>;
+function SettingsContent({ wallSettings, setWallSettings, isSavingSettings, onSave, onCancel, userPlan }: {
+  wallSettings: { privacy: string; allowAnonymous: boolean; requireApproval: boolean };
+  setWallSettings: React.Dispatch<React.SetStateAction<{ privacy: string; allowAnonymous: boolean; requireApproval: boolean }>>;
   isSavingSettings: boolean;
   onSave: () => void;
   onCancel: () => void;
+  userPlan: string;
 }) {
   return (
     <>
@@ -43,13 +52,13 @@ function SettingsContent({ wallSettings, setWallSettings, isSavingSettings, onSa
         <div className="flex bg-[#F3F2EE] rounded-full p-1">
           <button
             onClick={() => setWallSettings(s => ({ ...s, privacy: 'PUBLIC' }))}
-            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${wallSettings.privacy === 'PUBLIC' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
+            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors cursor-pointer ${wallSettings.privacy === 'PUBLIC' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
           >
             🌍 Public
           </button>
           <button
             onClick={() => setWallSettings(s => ({ ...s, privacy: 'PRIVATE' }))}
-            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors ${wallSettings.privacy === 'PRIVATE' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
+            className={`flex-1 py-2 rounded-full text-sm font-semibold transition-colors cursor-pointer ${wallSettings.privacy === 'PRIVATE' ? 'bg-white shadow-sm text-[#111]' : 'text-gray-500'}`}
           >
             🔒 Private
           </button>
@@ -62,11 +71,11 @@ function SettingsContent({ wallSettings, setWallSettings, isSavingSettings, onSa
       </div>
 
       {/* Anonymous Toggle */}
-      <div className="mb-5">
+      <div className="mb-4">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Anonymous notes</p>
         <button
           onClick={() => setWallSettings(s => ({ ...s, allowAnonymous: !s.allowAnonymous }))}
-          className="flex items-center justify-between w-full bg-[#F3F2EE] rounded-xl px-4 py-3"
+          className="flex items-center justify-between w-full bg-[#F3F2EE] rounded-xl px-4 py-3 cursor-pointer"
         >
           <span className="text-sm font-medium text-[#111]">Allow anonymous posting</span>
           <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 ${wallSettings.allowAnonymous ? 'bg-[#0A1118]' : 'bg-gray-300'}`}>
@@ -75,17 +84,50 @@ function SettingsContent({ wallSettings, setWallSettings, isSavingSettings, onSa
         </button>
       </div>
 
+      {/* Pre-Moderation Approval Toggle */}
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+            <ShieldCheck size={14} className="text-amber-600" />
+            <span>Pre-Moderation</span>
+          </p>
+          {userPlan === 'FREE' && (
+            <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">
+              <Crown size={11} /> Pro
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => {
+            if (userPlan === 'FREE') {
+              window.open('/pricing', '_blank');
+            } else {
+              setWallSettings(s => ({ ...s, requireApproval: !s.requireApproval }));
+            }
+          }}
+          className="flex items-center justify-between w-full bg-[#F3F2EE] hover:bg-[#EAE9E3] rounded-xl px-4 py-3 cursor-pointer transition-colors text-left"
+        >
+          <div>
+            <span className="text-sm font-medium text-[#111] block">Review before publishing</span>
+            <span className="text-[11px] text-gray-500">Hold notes until you approve them</span>
+          </div>
+          <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-1 shrink-0 ${wallSettings.requireApproval ? 'bg-[#0A1118]' : 'bg-gray-300'}`}>
+            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${wallSettings.requireApproval ? 'translate-x-4' : 'translate-x-0'}`} />
+          </div>
+        </button>
+      </div>
+
       <div className="flex gap-2">
         <button
           onClick={onCancel}
-          className="flex-1 py-3 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+          className="flex-1 py-3 rounded-full text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           Cancel
         </button>
         <button
           onClick={onSave}
           disabled={isSavingSettings}
-          className="flex-1 py-3 rounded-full text-sm font-semibold bg-[#0A1118] text-white hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+          className="flex-1 py-3 rounded-full text-sm font-semibold bg-[#0A1118] text-white hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer"
         >
           {isSavingSettings ? <Loader2 size={14} className="animate-spin" /> : null}
           {isSavingSettings ? 'Saving...' : 'Save'}
@@ -154,6 +196,9 @@ export default function WallClient({ slug }: { slug: string }) {
       case 'font-caveat': return `font-caveat ${baseSize === 'lg' ? 'text-3xl leading-8' : baseSize === 'xl' ? 'text-4xl leading-10' : 'text-2xl leading-6'}`;
       case 'font-kalam': return `font-kalam ${baseSize === 'lg' ? 'text-xl' : baseSize === 'xl' ? 'text-3xl' : 'text-[17px]'}`;
       case 'font-patrick': return `font-patrick ${baseSize === 'lg' ? 'text-2xl leading-7' : baseSize === 'xl' ? 'text-3xl leading-9' : 'text-xl leading-6'}`;
+      case 'font-dancing': return `font-dancing ${baseSize === 'lg' ? 'text-2xl leading-7' : baseSize === 'xl' ? 'text-3xl leading-9' : 'text-xl leading-6'}`;
+      case 'font-indie': return `font-indie ${baseSize === 'lg' ? 'text-xl leading-7' : baseSize === 'xl' ? 'text-2xl leading-8' : 'text-base leading-5'}`;
+      case 'font-shadows': return `font-shadows ${baseSize === 'lg' ? 'text-2xl leading-7' : baseSize === 'xl' ? 'text-3xl leading-8' : 'text-lg leading-6'}`;
       case 'font-sans':
       default: return `font-sans ${baseSize === 'lg' ? 'text-lg font-medium' : baseSize === 'xl' ? 'text-2xl font-medium' : 'text-[15px] font-medium'}`;
     }
@@ -221,16 +266,69 @@ export default function WallClient({ slug }: { slug: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [selectedFont, setSelectedFont] = useState(0);
+  const [composerMode, setComposerMode] = useState<'type' | 'draw'>('type');
+  const [drawingData, setDrawingData] = useState<string | null>(null);
+  const [isMemoryBookOpen, setIsMemoryBookOpen] = useState(false);
+  const [isPrintKitOpen, setIsPrintKitOpen] = useState(false);
+  const [selectedSticker, setSelectedSticker] = useState<string>('none');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-  const [wallSettings, setWallSettings] = useState({ privacy: 'PUBLIC', allowAnonymous: true });
+  const [wallSettings, setWallSettings] = useState({ privacy: 'PUBLIC', allowAnonymous: true, requireApproval: false });
+  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
 
-  const fontOptions = ['font-sans', 'font-caveat', 'font-kalam', 'font-patrick'];
+  const handleApproveNote = async (noteId: number) => {
+    try {
+      const res = await fetch(`/api/notes/${noteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "APPROVED" })
+      });
+      if (res.ok) {
+        setNotes(prev => prev.map(n => n.id === noteId ? { ...n, isPending: false } : n));
+      }
+    } catch (err) {
+      console.error("Approve note error:", err);
+    }
+  };
+
+  const handleRejectNote = async (noteId: number) => {
+    try {
+      const res = await fetch(`/api/notes/${noteId}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        setNotes(prev => prev.filter(n => n.id !== noteId));
+      }
+    } catch (err) {
+      console.error("Reject note error:", err);
+    }
+  };
+
+  const handleApproveAll = async () => {
+    const pendingNotes = notes.filter(n => n.isPending);
+    for (const note of pendingNotes) {
+      await handleApproveNote(note.id);
+    }
+  };
+
+  const fontOptions = [
+    { id: 'font-sans', label: 'Sans', sample: 'Aa' },
+    { id: 'font-caveat', label: 'Caveat', sample: 'Cv' },
+    { id: 'font-kalam', label: 'Kalam', sample: 'Kl' },
+    { id: 'font-patrick', label: 'Patrick', sample: 'Pt' },
+    { id: 'font-dancing', label: 'Script', sample: 'Ds' },
+    { id: 'font-indie', label: 'Ink Pen', sample: 'In' },
+    { id: 'font-shadows', label: 'Neat', sample: 'Sh' }
+  ];
 
   // Sync wallSettings when wall loads
   useEffect(() => {
     if (wall) {
-      setWallSettings({ privacy: wall.privacy, allowAnonymous: wall.allowAnonymous });
+      setWallSettings({ 
+        privacy: wall.privacy, 
+        allowAnonymous: wall.allowAnonymous,
+        requireApproval: !!wall.requireApproval
+      });
     }
   }, [wall]);
 
@@ -280,13 +378,19 @@ export default function WallClient({ slug }: { slug: string }) {
         // Ignore client hint errors
       }
 
+      const noteContent = composerMode === 'draw' ? drawingData : newText;
+      const noteFont = composerMode === 'draw' ? 'font-draw' : fontOptions[selectedFont].id;
+
+      if (!noteContent) return;
+
       const res = await fetch(`/api/walls/${slug}/notes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: newText,
+          text: noteContent,
           color: colors[selectedColor].bg,
-          font: fontOptions[selectedFont],
+          font: noteFont,
+          sticker: selectedSticker !== 'none' ? selectedSticker : null,
           isAnonymous,
           clientMetadata: {
             batteryLevel,
@@ -300,20 +404,28 @@ export default function WallClient({ slug }: { slug: string }) {
         const data = await res.json();
         const isPrivateVisitor = wall.privacy === 'PRIVATE' && !isCreator;
 
-        if (isPrivateVisitor) {
+        if (data.isPending) {
+          alert("Note submitted! 🎉 Awaiting review by the curator before appearing on the public wall.");
+          setIsModalOpen(false);
+        } else if (isPrivateVisitor) {
           setSubmitted(true);
           setIsModalOpen(false);
         } else {
           const newNote = {
             ...data.note,
+            sticker: data.note.sticker || (selectedSticker !== 'none' ? selectedSticker : null),
             x: Math.floor(Math.random() * 70) + 10,
             y: Math.floor(Math.random() * 70) + 10,
             rotate: Math.floor(Math.random() * 10) - 5,
+            isPending: false
           };
           setNotes(prev => [newNote, ...prev]);
           setIsModalOpen(false);
         }
         setNewText("");
+        setDrawingData(null);
+        setComposerMode("type");
+        setSelectedSticker("none");
         setIsAnonymous(true);
         setSelectedColor(0);
         setSelectedFont(0);
@@ -470,69 +582,206 @@ export default function WallClient({ slug }: { slug: string }) {
                 <p className="text-gray-200 text-sm">Only {wall.title} will see this.</p>
               </div>
 
-              <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[300px] flex flex-col`}>
-                <textarea
-                  value={newText}
-                  onChange={(e) => setNewText(e.target.value.slice(0, userPlan === 'PRO' ? 5000 : 200))}
-                  placeholder="Write anything..."
-                  className={`w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont], 'lg')}`}
-                  autoFocus
-                />
+              <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[320px] flex flex-col relative`}>
+                <NoteSticker type={selectedSticker} />
                 
-                <div className="flex flex-col gap-3 mt-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Font</span>
-                    <div className="flex gap-2 relative">
-                      {fontOptions.map((font, idx) => {
-                        const isPremium = idx > 0;
-                        const isLocked = userPlan === 'FREE' && isPremium;
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => !isLocked && setSelectedFont(idx)}
-                            disabled={isLocked}
-                            title={isLocked ? "Pro Plan Required" : undefined}
-                            className={`relative w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
-                              selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
-                            } ${getHandwritingClass(font, 'sm')} ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
-                            aria-label={`Select font ${idx}`}
-                          >
-                            Ag
-                            {isLocked && <Crown size={10} className="absolute -top-1.5 -right-1.5 text-amber-500 drop-shadow-sm" />}
-                          </button>
-                        );
-                      })}
-                    </div>
+                {/* Mode Selector */}
+                <div className="flex items-center justify-between pb-3 mb-2 border-b border-black/5">
+                  <div className="flex items-center gap-1 bg-black/5 p-1 rounded-full">
+                    <button
+                      type="button"
+                      onClick={() => setComposerMode('type')}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        composerMode === 'type' ? 'bg-white shadow-xs text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                      }`}
+                    >
+                      <Type size={13} />
+                      <span>Type</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (userPlan === 'FREE') {
+                          window.open('/pricing', '_blank');
+                        } else {
+                          setComposerMode('draw');
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        composerMode === 'draw' ? 'bg-white shadow-xs text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                      }`}
+                    >
+                      <PenTool size={13} />
+                      <span>Handwrite / Stylus</span>
+                      {userPlan === 'FREE' && <Crown size={11} className="text-amber-500 ml-0.5" />}
+                    </button>
                   </div>
+                  {composerMode === 'type' && (
+                    <span className="text-gray-500/70 text-xs font-medium">{newText.length}/{userPlan === 'PRO' ? '∞' : '200'}</span>
+                  )}
+                </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Color</span>
-                      <div className="flex gap-2">
-                        {colors.map((color, idx) => {
-                          const isPremium = idx > 1;
-                          const isLocked = userPlan === 'FREE' && isPremium;
-                          return (
-                            <button key={idx} 
-                              onClick={() => !isLocked && setSelectedColor(idx)}
-                              disabled={isLocked}
-                              title={isLocked ? "Pro Plan Required" : undefined}
-                              className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
-                            >
-                              {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
-                            </button>
-                          );
-                        })}
+                {composerMode === 'type' ? (
+                  <>
+                    <textarea
+                      value={newText}
+                      onChange={(e) => setNewText(e.target.value.slice(0, userPlan === 'PRO' ? 5000 : 200))}
+                      placeholder="Write anything..."
+                      className={`w-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont].id, 'lg')}`}
+                      autoFocus
+                    />
+                    
+                    <div className="flex flex-col gap-2.5 mt-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Font</span>
+                        <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none relative">
+                          {fontOptions.map((font, idx) => {
+                            const isPremium = idx > 0;
+                            const isLocked = userPlan === 'FREE' && isPremium;
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  if (isLocked) {
+                                    window.open('/pricing', '_blank');
+                                  } else {
+                                    setSelectedFont(idx);
+                                  }
+                                }}
+                                title={isLocked ? "Pro Plan Required" : font.label}
+                                className={`relative px-2.5 py-1 rounded-md flex items-center justify-center text-xs transition-all shrink-0 cursor-pointer ${
+                                  selectedFont === idx ? "bg-black/15 text-black shadow-inner font-bold" : "text-gray-600 hover:bg-black/5"
+                                } ${getHandwritingClass(font.id, 'sm')} ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                                aria-label={`Select font ${font.label}`}
+                              >
+                                {font.label}
+                                {isLocked && <Crown size={9} className="absolute -top-1 -right-1 text-amber-500 drop-shadow-sm" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Color</span>
+                          <div className="flex gap-2">
+                            {colors.map((color, idx) => {
+                              const isPremium = idx > 1;
+                              const isLocked = userPlan === 'FREE' && isPremium;
+                              return (
+                                <button key={idx} 
+                                  onClick={() => !isLocked && setSelectedColor(idx)}
+                                  disabled={isLocked}
+                                  title={isLocked ? "Pro Plan Required" : undefined}
+                                  className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                                >
+                                  {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Sticker</span>
+                        <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none items-center">
+                          {STICKER_OPTIONS.map((stk) => {
+                            const isLocked = userPlan === 'FREE' && stk.isPremium;
+                            const isSelected = selectedSticker === stk.id;
+                            return (
+                              <button
+                                key={stk.id}
+                                type="button"
+                                onClick={() => {
+                                  if (isLocked) {
+                                    window.open('/pricing', '_blank');
+                                  } else {
+                                    setSelectedSticker(stk.id);
+                                  }
+                                }}
+                                title={isLocked ? "Pro Plan Required" : stk.name}
+                                className={`relative px-2 py-1 rounded-md flex items-center gap-1 text-xs transition-all shrink-0 cursor-pointer ${
+                                  isSelected ? "bg-black/15 text-black shadow-inner font-bold" : "text-gray-600 hover:bg-black/5"
+                                } ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                              >
+                                {stk.preview}
+                                <span className="text-[11px] font-medium">{stk.name}</span>
+                                {isLocked && <Crown size={9} className="absolute -top-1 -right-1 text-amber-500 drop-shadow-sm" />}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                    <span className="text-gray-500/70 text-sm font-medium">{newText.length}/{userPlan === 'PRO' ? '∞' : '200'}</span>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col min-h-[260px]">
+                    <HandwritingCanvas onStrokeChange={setDrawingData} className="flex-1" />
+                    <div className="flex flex-col gap-2.5 mt-3 pt-2 border-t border-black/5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Paper</span>
+                          <div className="flex gap-2">
+                            {colors.map((color, idx) => {
+                              const isPremium = idx > 1;
+                              const isLocked = userPlan === 'FREE' && isPremium;
+                              return (
+                                <button key={idx} 
+                                  onClick={() => !isLocked && setSelectedColor(idx)}
+                                  disabled={isLocked}
+                                  title={isLocked ? "Pro Plan Required" : undefined}
+                                  className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                                >
+                                  {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <span className="text-xs text-amber-700 bg-amber-100/60 font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Crown size={11} /> Stylus Mode
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Sticker</span>
+                        <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none items-center">
+                          {STICKER_OPTIONS.map((stk) => {
+                            const isLocked = userPlan === 'FREE' && stk.isPremium;
+                            const isSelected = selectedSticker === stk.id;
+                            return (
+                              <button
+                                key={stk.id}
+                                type="button"
+                                onClick={() => {
+                                  if (isLocked) {
+                                    window.open('/pricing', '_blank');
+                                  } else {
+                                    setSelectedSticker(stk.id);
+                                  }
+                                }}
+                                title={isLocked ? "Pro Plan Required" : stk.name}
+                                className={`relative px-2 py-1 rounded-md flex items-center gap-1 text-xs transition-all shrink-0 cursor-pointer ${
+                                  isSelected ? "bg-black/15 text-black shadow-inner font-bold" : "text-gray-600 hover:bg-black/5"
+                                } ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                              >
+                                {stk.preview}
+                                <span className="text-[11px] font-medium">{stk.name}</span>
+                                {isLocked && <Crown size={9} className="absolute -top-1 -right-1 text-amber-500 drop-shadow-sm" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <button
                 onClick={handleAddNote}
-                disabled={!newText.trim()}
+                disabled={composerMode === 'type' ? !newText.trim() : !drawingData}
                 className="mt-4 bg-[#0A1118] text-white py-4 rounded-full font-medium w-full flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-50 shadow-lg"
               >
                 Send it
@@ -567,12 +816,28 @@ export default function WallClient({ slug }: { slug: string }) {
           </div>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setIsPrintKitOpen(true)}
+            className="px-3.5 py-2 md:px-4 md:py-2.5 rounded-full bg-white border border-gray-200/90 shadow-2xs hover:bg-gray-50 text-xs font-semibold text-gray-700 flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Print Event Posters & QR Table Stands"
+          >
+            <QrCode size={15} className="text-blue-600" />
+            <span>Print QR Kit</span>
+          </button>
+          <button
+            onClick={() => setIsMemoryBookOpen(true)}
+            className="px-3.5 py-2 md:px-4 md:py-2.5 rounded-full bg-white border border-gray-200/90 shadow-2xs hover:bg-gray-50 text-xs font-semibold text-gray-700 flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Export Keepsake Memory Book"
+          >
+            <BookOpen size={15} className="text-amber-600" />
+            <span>Memory Book</span>
+          </button>
           <button 
             onClick={() => setIsShareModalOpen(true)}
-            className="w-12 h-12 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+            className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer"
           >
-            <Share size={20} className="text-gray-700" />
+            <Share size={18} className="text-gray-700" />
           </button>
           {isCreator && (
             <div className="relative">
@@ -592,6 +857,7 @@ export default function WallClient({ slug }: { slug: string }) {
                     isSavingSettings={isSavingSettings}
                     onSave={handleSaveSettings}
                     onCancel={() => setIsSettingsOpen(false)}
+                    userPlan={userPlan}
                   />
                 </div>
               )}
@@ -623,7 +889,36 @@ export default function WallClient({ slug }: { slug: string }) {
               isSavingSettings={isSavingSettings}
               onSave={handleSaveSettings}
               onCancel={() => setIsSettingsOpen(false)}
+              userPlan={userPlan}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Moderation Review Banner for Creator */}
+      {isCreator && notes.some(n => n.isPending) && (
+        <div className="max-w-7xl mx-auto w-full px-4 md:px-12 mb-4">
+          <div className="bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-amber-500/10 border border-amber-300/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3 text-amber-950">
+              <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#111]">
+                  Moderation Queue: {notes.filter(n => n.isPending).length} {notes.filter(n => n.isPending).length === 1 ? 'note' : 'notes'} pending
+                </p>
+                <p className="text-xs text-amber-900/80">
+                  These notes are hidden from visitors until you approve them.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsQueueModalOpen(true)}
+              className="bg-[#0A1118] hover:bg-black text-white text-xs font-bold px-4 py-2.5 rounded-full transition-all shadow-xs shrink-0 cursor-pointer flex items-center gap-1.5"
+            >
+              <Clock size={13} />
+              <span>Review Queue</span>
+            </button>
           </div>
         </div>
       )}
@@ -659,9 +954,22 @@ export default function WallClient({ slug }: { slug: string }) {
                 touchAction: 'none' // Prevent scrolling while dragging on touch devices
               }}
             >
-              <p className={`text-gray-900 mb-6 leading-relaxed select-none ${getHandwritingClass(note.font, 'lg')}`}>
-                {note.text}
-              </p>
+              <NoteSticker type={note.sticker} />
+              {note.isPending && (
+                <div className="mb-3 inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-900 border border-amber-500/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
+                  <Clock size={11} className="text-amber-700" />
+                  <span>Pending Approval</span>
+                </div>
+              )}
+              {note.font === 'font-draw' || note.text?.startsWith('data:image/') ? (
+                <div className="w-full mb-6 select-none pointer-events-none flex justify-center">
+                  <img src={note.text} alt="Handwritten note" className="w-full h-auto max-h-[220px] object-contain drop-shadow-xs" />
+                </div>
+              ) : (
+                <p className={`text-gray-900 mb-6 leading-relaxed select-none ${getHandwritingClass(note.font, 'lg')}`}>
+                  {note.text}
+                </p>
+              )}
               <div className="flex items-center justify-between select-none">
                 <span className="text-gray-500 relative flex items-center gap-1 group">
                   — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
@@ -673,7 +981,7 @@ export default function WallClient({ slug }: { slug: string }) {
                       onPointerDown={(e) => e.stopPropagation()} // Prevent dragging
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (userPlan === 'FREE') window.open('/pro', '_blank');
+                        if (userPlan === 'FREE') window.open('/pricing', '_blank');
                         else setMetadataModal(note);
                       }}
                       className={`transition-all flex items-center ${userPlan === 'PRO' ? 'text-amber-600 cursor-help' : 'text-gray-400 hover:text-amber-500 cursor-pointer'}`}
@@ -698,6 +1006,30 @@ export default function WallClient({ slug }: { slug: string }) {
                   </button>
                 </div>
               </div>
+
+              {/* Moderation Controls for Creator */}
+              {isCreator && note.isPending && (
+                <div className="mt-4 pt-3 border-t border-black/10 flex items-center justify-between gap-2" onPointerDown={e => e.stopPropagation()}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApproveNote(note.id);
+                    }}
+                    className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-1.5 rounded-md text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                  >
+                    <Check size={13} /> Approve
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRejectNote(note.id);
+                    }}
+                    className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-xs font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 size={13} /> Reject
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}
@@ -717,9 +1049,22 @@ export default function WallClient({ slug }: { slug: string }) {
                 <button
                   key={note.id}
                   onClick={() => setSelectedNote(note)}
-                  className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
+                  className={`relative p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
                 >
-                  <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
+                  <NoteSticker type={note.sticker} />
+                  {note.isPending && (
+                    <div className="mb-2 inline-flex items-center gap-1 bg-amber-500/20 text-amber-900 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase">
+                      <Clock size={10} className="text-amber-700" />
+                      <span>Pending</span>
+                    </div>
+                  )}
+                  {note.font === 'font-draw' || note.text?.startsWith('data:image/') ? (
+                    <div className="w-full mb-3 select-none pointer-events-none flex justify-center">
+                      <img src={note.text} alt="Handwritten note" className="w-full h-auto max-h-[140px] object-contain drop-shadow-xs" />
+                    </div>
+                  ) : (
+                    <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
+                  )}
                   <div className="flex items-center justify-between">
                     <p className="text-gray-500 text-xs flex items-center gap-1 group">
                       — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
@@ -730,7 +1075,7 @@ export default function WallClient({ slug }: { slug: string }) {
                           onClick={(e) => {
                             e.stopPropagation();
                             if (userPlan === 'FREE') {
-                              window.open('/pro', '_blank');
+                              window.open('/pricing', '_blank');
                             } else {
                               setMetadataModal(note);
                             }
@@ -753,6 +1098,29 @@ export default function WallClient({ slug }: { slug: string }) {
                       </div>
                     </div>
                   </div>
+
+                  {isCreator && note.isPending && (
+                    <div className="mt-3 pt-2.5 border-t border-black/10 flex items-center justify-between gap-1.5" onClick={e => e.stopPropagation()}>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApproveNote(note.id);
+                        }}
+                        className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-1 rounded text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Check size={11} /> Approve
+                      </span>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRejectNote(note.id);
+                        }}
+                        className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 size={11} />
+                      </span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -761,9 +1129,22 @@ export default function WallClient({ slug }: { slug: string }) {
                 <button
                   key={note.id}
                   onClick={() => setSelectedNote(note)}
-                  className={`p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
+                  className={`relative p-5 rounded-lg shadow-sm w-full text-left ${note.color} active:scale-[0.97] transition-transform`}
                 >
-                  <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
+                  <NoteSticker type={note.sticker} />
+                  {note.isPending && (
+                    <div className="mb-2 inline-flex items-center gap-1 bg-amber-500/20 text-amber-900 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase">
+                      <Clock size={10} className="text-amber-700" />
+                      <span>Pending</span>
+                    </div>
+                  )}
+                  {note.font === 'font-draw' || note.text?.startsWith('data:image/') ? (
+                    <div className="w-full mb-3 select-none pointer-events-none flex justify-center">
+                      <img src={note.text} alt="Handwritten note" className="w-full h-auto max-h-[140px] object-contain drop-shadow-xs" />
+                    </div>
+                  ) : (
+                    <p className={`text-gray-900 mb-4 leading-relaxed line-clamp-4 ${getHandwritingClass(note.font, 'sm')}`}>{note.text}</p>
+                  )}
                   <div className="flex items-center justify-between">
                     <p className="text-gray-500 text-xs flex items-center gap-1 group">
                       — {note.isAnonymous ? "Anonymous" : (note.authorName ?? "Someone")}
@@ -774,7 +1155,7 @@ export default function WallClient({ slug }: { slug: string }) {
                           onClick={(e) => {
                             e.stopPropagation();
                             if (userPlan === 'FREE') {
-                              window.open('/pro', '_blank');
+                              window.open('/pricing', '_blank');
                             } else {
                               setMetadataModal(note);
                             }
@@ -797,6 +1178,29 @@ export default function WallClient({ slug }: { slug: string }) {
                       </div>
                     </div>
                   </div>
+
+                  {isCreator && note.isPending && (
+                    <div className="mt-3 pt-2.5 border-t border-black/10 flex items-center justify-between gap-1.5" onClick={e => e.stopPropagation()}>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApproveNote(note.id);
+                        }}
+                        className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-1 rounded text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Check size={11} /> Approve
+                      </span>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRejectNote(note.id);
+                        }}
+                        className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 size={11} />
+                      </span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -822,10 +1226,17 @@ export default function WallClient({ slug }: { slug: string }) {
             </div>
 
             {/* Note content */}
-            <div className="flex-1 flex flex-col justify-center px-8 pb-8">
-              <p className={`text-gray-900 leading-relaxed mb-10 ${getHandwritingClass(selectedNote.font, 'xl')}`}>
-                {selectedNote.text}
-              </p>
+            <div className="flex-1 flex flex-col justify-center px-8 pb-8 relative">
+              <NoteSticker type={selectedNote.sticker} className="scale-125" />
+              {selectedNote.font === 'font-draw' || selectedNote.text?.startsWith('data:image/') ? (
+                <div className="w-full mb-10 select-none pointer-events-none flex justify-center">
+                  <img src={selectedNote.text} alt="Handwritten note" className="w-full h-auto max-h-[350px] object-contain drop-shadow-sm" />
+                </div>
+              ) : (
+                <p className={`text-gray-900 leading-relaxed mb-10 ${getHandwritingClass(selectedNote.font, 'xl')}`}>
+                  {selectedNote.text}
+                </p>
+              )}
               <p className="text-gray-600 text-base font-sans flex items-center gap-2">
                 — {selectedNote.isAnonymous ? "Anonymous" : (selectedNote.authorName ?? "Someone")}
               </p>
@@ -833,6 +1244,29 @@ export default function WallClient({ slug }: { slug: string }) {
 
             {/* Heart button at bottom */}
             <div className="px-8 pb-32">
+              {isCreator && selectedNote.isPending && (
+                <div className="flex gap-2.5 mb-3">
+                  <button
+                    onClick={() => {
+                      handleApproveNote(selectedNote.id);
+                      setSelectedNote(null);
+                    }}
+                    className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white py-3.5 rounded-full font-bold text-sm transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                  >
+                    <Check size={16} /> Approve Note
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleRejectNote(selectedNote.id);
+                      setSelectedNote(null);
+                    }}
+                    className="px-5 bg-red-100 hover:bg-red-200 text-red-700 py-3.5 rounded-full font-bold text-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Trash2 size={16} /> Reject
+                  </button>
+                </div>
+              )}
+
               <button
                 onClick={() => {
                   handleHeart(selectedNote.id);
@@ -852,7 +1286,7 @@ export default function WallClient({ slug }: { slug: string }) {
                   onClick={(e) => {
                     e.stopPropagation();
                     if (userPlan === 'FREE') {
-                      window.open('/pro', '_blank');
+                      window.open('/pricing', '_blank');
                     } else {
                       setSelectedNote(null);
                       setTimeout(() => setMetadataModal(selectedNote), 100);
@@ -913,92 +1347,211 @@ export default function WallClient({ slug }: { slug: string }) {
             </div>
 
             {/* Note Editor */}
-            <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[300px] flex flex-col relative`}>
-              <textarea
-                value={newText}
-                onChange={(e) => setNewText(e.target.value.slice(0, userPlan === 'PRO' ? 5000 : 200))}
-                placeholder="Write anything..."
-                className={`w-full h-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont], 'lg')}`}
-                autoFocus
-              />
+            <div className={`${colors[selectedColor].bg} rounded-sm p-6 shadow-xl w-full min-h-[320px] flex flex-col relative`}>
+              <NoteSticker type={selectedSticker} />
               
-              <div className="flex flex-col gap-3 mt-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Font</span>
-                  <div className="flex gap-2 relative">
-                      {fontOptions.map((font, idx) => {
-                        const isPremium = idx > 0;
-                        const isLocked = userPlan === 'FREE' && isPremium;
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => {
-                              if (isLocked) {
-                                window.open('/pro', '_blank');
-                              } else {
-                                setSelectedFont(idx);
-                              }
-                            }}
-                            title={isLocked ? "Pro Plan Required" : undefined}
-                            className={`relative w-6 h-6 rounded-sm flex items-center justify-center text-sm transition-all ${
-                              selectedFont === idx ? "bg-black/10 text-black shadow-inner" : "text-gray-500 hover:bg-black/5"
-                            } ${getHandwritingClass(font, 'sm')} ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
-                            aria-label={`Select font ${idx}`}
-                          >
-                            Ag
-                            {isLocked && <Crown size={10} className="absolute -top-1.5 -right-1.5 text-amber-500 drop-shadow-sm" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+              {/* Mode Selector */}
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-black/5">
+                <div className="flex items-center gap-1 bg-black/5 p-1 rounded-full">
+                  <button
+                    type="button"
+                    onClick={() => setComposerMode('type')}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      composerMode === 'type' ? 'bg-white shadow-xs text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    <Type size={13} />
+                    <span>Type</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (userPlan === 'FREE') {
+                        window.open('/pricing', '_blank');
+                      } else {
+                        setComposerMode('draw');
+                      }
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      composerMode === 'draw' ? 'bg-white shadow-xs text-gray-900' : 'text-gray-500 hover:text-gray-900'
+                    }`}
+                  >
+                    <PenTool size={13} />
+                    <span>Handwrite / Stylus</span>
+                    {userPlan === 'FREE' && <Crown size={11} className="text-amber-500 ml-0.5" />}
+                  </button>
+                </div>
+                {composerMode === 'type' && (
+                  <span className="text-gray-500/70 text-xs font-medium">{newText.length}/{userPlan === 'PRO' ? '∞' : '200'}</span>
+                )}
+              </div>
+
+              {composerMode === 'type' ? (
+                <>
+                  <textarea
+                    value={newText}
+                    onChange={(e) => setNewText(e.target.value.slice(0, userPlan === 'PRO' ? 5000 : 200))}
+                    placeholder="Write anything..."
+                    className={`w-full h-full flex-1 bg-transparent border-none outline-none resize-none text-gray-900 placeholder-gray-500/70 ${getHandwritingClass(fontOptions[selectedFont].id, 'lg')}`}
+                    autoFocus
+                  />
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-2.5 mt-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Color</span>
-                      <div className="flex gap-2 relative">
-                        {colors.map((color, idx) => {
-                          const isPremium = idx > 1;
+                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Font</span>
+                      <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none relative">
+                        {fontOptions.map((font, idx) => {
+                          const isPremium = idx > 0;
                           const isLocked = userPlan === 'FREE' && isPremium;
                           return (
                             <button
                               key={idx}
                               onClick={() => {
                                 if (isLocked) {
-                                  window.open('/pro', '_blank');
+                                  window.open('/pricing', '_blank');
                                 } else {
-                                  setSelectedColor(idx);
+                                  setSelectedFont(idx);
                                 }
                               }}
-                              title={isLocked ? "Pro Plan Required" : undefined}
-                              className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${
-                                selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
-                              } shadow-sm transition-all ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
-                              aria-label={`Select color ${idx}`}
+                              title={isLocked ? "Pro Plan Required" : font.label}
+                              className={`relative px-2.5 py-1 rounded-md flex items-center justify-center text-xs transition-all shrink-0 cursor-pointer ${
+                                selectedFont === idx ? "bg-black/15 text-black shadow-inner font-bold" : "text-gray-600 hover:bg-black/5"
+                              } ${getHandwritingClass(font.id, 'sm')} ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                              aria-label={`Select font ${font.label}`}
                             >
-                              {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                              {font.label}
+                              {isLocked && <Crown size={9} className="absolute -top-1 -right-1 text-amber-500 drop-shadow-sm" />}
                             </button>
                           );
                         })}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Color</span>
+                        <div className="flex gap-2 relative">
+                          {colors.map((color, idx) => {
+                            const isPremium = idx > 1;
+                            const isLocked = userPlan === 'FREE' && isPremium;
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  if (isLocked) {
+                                    window.open('/pricing', '_blank');
+                                  } else {
+                                    setSelectedColor(idx);
+                                  }
+                                }}
+                                title={isLocked ? "Pro Plan Required" : undefined}
+                                className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${
+                                  selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"
+                                } shadow-sm transition-all cursor-pointer ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                                aria-label={`Select color ${idx}`}
+                              >
+                                {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Sticker</span>
+                      <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none items-center">
+                        {STICKER_OPTIONS.map((stk) => {
+                          const isLocked = userPlan === 'FREE' && stk.isPremium;
+                          const isSelected = selectedSticker === stk.id;
+                          return (
+                            <button
+                              key={stk.id}
+                              type="button"
+                              onClick={() => {
+                                if (isLocked) {
+                                  window.open('/pricing', '_blank');
+                                } else {
+                                  setSelectedSticker(stk.id);
+                                }
+                              }}
+                              title={isLocked ? "Pro Plan Required" : stk.name}
+                              className={`relative px-2 py-1 rounded-md flex items-center gap-1 text-xs transition-all shrink-0 cursor-pointer ${
+                                isSelected ? "bg-black/15 text-black shadow-inner font-bold" : "text-gray-600 hover:bg-black/5"
+                              } ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                            >
+                              {stk.preview}
+                              <span className="text-[11px] font-medium">{stk.name}</span>
+                              {isLocked && <Crown size={9} className="absolute -top-1 -right-1 text-amber-500 drop-shadow-sm" />}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="text-gray-500/70 text-sm font-medium">
-                      {newText.length}/{userPlan === 'PRO' ? '∞' : '200'}
-                    </div>
-                    {userPlan === 'FREE' && (
-                      <span 
-                        onClick={() => window.open('/pro', '_blank')}
-                        className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-amber-500 font-bold cursor-pointer hover:text-amber-600 transition-colors"
-                        title="Upgrade to Pro for unlimited characters"
-                      >
-                        <Crown size={12} strokeWidth={3} />
-                        (Unlimited)
+                </>
+              ) : (
+                <div className="flex-1 flex flex-col min-h-[260px]">
+                  <HandwritingCanvas onStrokeChange={setDrawingData} className="flex-1" />
+                  <div className="flex flex-col gap-2.5 mt-3 pt-2 border-t border-black/5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Paper</span>
+                        <div className="flex gap-2">
+                          {colors.map((color, idx) => {
+                            const isPremium = idx > 1;
+                            const isLocked = userPlan === 'FREE' && isPremium;
+                            return (
+                              <button key={idx} 
+                                onClick={() => !isLocked && setSelectedColor(idx)}
+                                disabled={isLocked}
+                                title={isLocked ? "Pro Plan Required" : undefined}
+                                className={`relative w-5 h-5 rounded-full ${color.bg} border-2 ${selectedColor === idx ? "border-gray-400 scale-110" : "border-transparent"} shadow-sm transition-all ${isLocked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                              >
+                                {isLocked && <Crown size={10} className="absolute -top-2 -right-2 text-amber-500 drop-shadow-sm" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <span className="text-xs text-amber-700 bg-amber-100/60 font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Crown size={11} /> Stylus Mode
                       </span>
-                    )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold w-12 flex-shrink-0">Sticker</span>
+                      <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none items-center">
+                        {STICKER_OPTIONS.map((stk) => {
+                          const isLocked = userPlan === 'FREE' && stk.isPremium;
+                          const isSelected = selectedSticker === stk.id;
+                          return (
+                            <button
+                              key={stk.id}
+                              type="button"
+                              onClick={() => {
+                                if (isLocked) {
+                                  window.open('/pricing', '_blank');
+                                } else {
+                                  setSelectedSticker(stk.id);
+                                }
+                              }}
+                              title={isLocked ? "Pro Plan Required" : stk.name}
+                              className={`relative px-2 py-1 rounded-md flex items-center gap-1 text-xs transition-all shrink-0 cursor-pointer ${
+                                isSelected ? "bg-black/15 text-black shadow-inner font-bold" : "text-gray-600 hover:bg-black/5"
+                              } ${isLocked ? 'opacity-50 hover:opacity-80' : ''}`}
+                            >
+                              {stk.preview}
+                              <span className="text-[11px] font-medium">{stk.name}</span>
+                              {isLocked && <Crown size={9} className="absolute -top-1 -right-1 text-amber-500 drop-shadow-sm" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Controls */}
@@ -1010,7 +1563,7 @@ export default function WallClient({ slug }: { slug: string }) {
               <button
                 type="button"
                 onClick={() => setIsAnonymous(!isAnonymous)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
                   isAnonymous ? "bg-[#0A1118]" : "bg-gray-300"
                 }`}
               >
@@ -1025,7 +1578,7 @@ export default function WallClient({ slug }: { slug: string }) {
             {/* Submit Button */}
             <button
               onClick={handleAddNote}
-              disabled={!newText.trim() || isSubmitting}
+              disabled={(composerMode === 'type' ? !newText.trim() : !drawingData) || isSubmitting}
               className="mt-4 bg-[#0A1118] text-white py-4 rounded-full font-medium w-full flex items-center justify-center gap-2 hover:bg-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               {isSubmitting ? (
@@ -1112,21 +1665,45 @@ export default function WallClient({ slug }: { slug: string }) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button 
-                onClick={handleShareLink}
-                className="flex-1 bg-[#EAE9E4] text-gray-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#DFDED9] transition-colors"
+            <div className="flex flex-col gap-2.5">
+              <div className="flex gap-3">
+                <button 
+                  onClick={handleShareLink}
+                  className="flex-1 bg-[#EAE9E4] text-gray-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#DFDED9] transition-colors cursor-pointer"
+                >
+                  <Share size={16} />
+                  Share Link
+                </button>
+                <button 
+                  onClick={handleSaveQR}
+                  disabled={isGeneratingQR}
+                  className="flex-1 bg-[#EAE9E4] text-gray-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#DFDED9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isGeneratingQR ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                  Save QR
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setIsShareModalOpen(false);
+                  setIsPrintKitOpen(true);
+                }}
+                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-900 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border border-blue-200 shadow-2xs"
               >
-                <Share size={16} />
-                Share Link
+                <QrCode size={16} className="text-blue-700" />
+                <span>Print Event Posters & Table QR Stands</span>
               </button>
-              <button 
-                onClick={handleSaveQR}
-                disabled={isGeneratingQR}
-                className="flex-1 bg-[#EAE9E4] text-gray-700 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#DFDED9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+
+              <button
+                onClick={() => {
+                  setIsShareModalOpen(false);
+                  setIsMemoryBookOpen(true);
+                }}
+                className="w-full bg-gradient-to-r from-amber-100 to-amber-200/80 hover:from-amber-200 hover:to-amber-300 text-amber-900 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border border-amber-300/50 shadow-2xs"
               >
-                {isGeneratingQR ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                Save QR
+                <BookOpen size={16} className="text-amber-700" />
+                <span>Export Keepsake Memory Book (PDF)</span>
               </button>
             </div>
 
@@ -1220,6 +1797,133 @@ export default function WallClient({ slug }: { slug: string }) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Moderation Review Queue Modal */}
+      {isQueueModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-[#FAF9F6] border border-gray-200 text-[#111] max-w-2xl w-full rounded-3xl p-6 sm:p-8 shadow-2xl relative my-8 max-h-[88vh] flex flex-col">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200/80 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center">
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <h3 className="font-playfair text-xl font-bold">Moderation Review Queue</h3>
+                  <p className="text-xs text-gray-500">
+                    {notes.filter(n => n.isPending).length} pending {notes.filter(n => n.isPending).length === 1 ? 'submission' : 'submissions'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {notes.some(n => n.isPending) && (
+                  <button
+                    onClick={handleApproveAll}
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-3.5 py-2 rounded-full transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
+                  >
+                    <CheckCheck size={14} /> Approve All
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsQueueModalOpen(false)}
+                  className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto py-5 space-y-4">
+              {notes.filter(n => n.isPending).length === 0 ? (
+                <div className="py-12 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-3">
+                    <Check size={24} />
+                  </div>
+                  <h4 className="font-playfair text-lg font-bold">All caught up!</h4>
+                  <p className="text-xs text-gray-500 max-w-xs mt-1">
+                    No notes are currently awaiting review. New notes submitted to this wall will appear here for approval.
+                  </p>
+                </div>
+              ) : (
+                notes.filter(n => n.isPending).map(note => (
+                  <div
+                    key={note.id}
+                    className={`${note.color} rounded-2xl p-5 border border-black/5 shadow-xs flex flex-col justify-between gap-4 relative`}
+                  >
+                    <NoteSticker type={note.sticker} />
+                    {note.font === 'font-draw' || note.text?.startsWith('data:image/') ? (
+                      <div className="w-full flex justify-center py-2">
+                        <img src={note.text} alt="Handwritten note" className="w-full max-h-[160px] object-contain drop-shadow-xs" />
+                      </div>
+                    ) : (
+                      <p className={`text-gray-900 leading-relaxed ${getHandwritingClass(note.font, 'lg')}`}>
+                        {note.text}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between border-t border-black/5 pt-3">
+                      <span className="text-xs text-gray-600 font-medium">
+                        — {note.isAnonymous ? "Anonymous" : (note.authorName || "Someone")}
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleApproveNote(note.id)}
+                          className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+                        >
+                          <Check size={13} /> Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectNote(note.id)}
+                          className="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <Trash2 size={13} /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 border-t border-gray-200/80 flex items-center justify-between text-xs text-gray-500 shrink-0">
+              <span>Approved notes appear on the public wall instantly</span>
+              <button
+                onClick={() => setIsQueueModalOpen(false)}
+                className="px-4 py-1.5 rounded-full hover:bg-gray-100 transition-colors font-medium cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Keepsake Memory Book Modal */}
+      {wall && (
+        <>
+          <MemoryBookModal
+            wall={wall}
+            notes={notes}
+            userPlan={userPlan}
+            isOpen={isMemoryBookOpen}
+            onClose={() => setIsMemoryBookOpen(false)}
+            getHandwritingClass={getHandwritingClass}
+          />
+          <EventPrintKitModal
+            wall={wall}
+            wallUrl={typeof window !== "undefined" ? window.location.href : `https://thoughtboard.me/wall/${wall.slug}`}
+            userPlan={userPlan}
+            isOpen={isPrintKitOpen}
+            onClose={() => setIsPrintKitOpen(false)}
+          />
+        </>
       )}
     </div>
   );

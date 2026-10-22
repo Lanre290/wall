@@ -57,6 +57,7 @@ if (!sequelize.models.User) {
     description: { type: DataTypes.TEXT, allowNull: true },
     privacy: { type: DataTypes.ENUM('PUBLIC', 'PRIVATE'), defaultValue: 'PUBLIC' },
     allowAnonymous: { type: DataTypes.BOOLEAN, defaultValue: true },
+    requireApproval: { type: DataTypes.BOOLEAN, defaultValue: false },
     creatorId: { type: DataTypes.INTEGER, allowNull: false }
   }, { sequelize, modelName: 'Wall' });
 
@@ -99,5 +100,13 @@ const ExportUser = sequelize.models.User as typeof User;
 const ExportWall = sequelize.models.Wall as typeof Wall;
 const ExportNote = sequelize.models.Note as typeof Note;
 const ExportAppreciation = sequelize.models.Appreciation as typeof Appreciation;
+
+export async function ensureSchema() {
+  try {
+    await sequelize.query('ALTER TABLE "Walls" ADD COLUMN IF NOT EXISTS "requireApproval" BOOLEAN DEFAULT FALSE;');
+  } catch (e) {
+    // ignore if already present or not connected
+  }
+}
 
 export { sequelize, ExportUser as User, ExportWall as Wall, ExportNote as Note, ExportAppreciation as Appreciation };
