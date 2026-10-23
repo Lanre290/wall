@@ -39,10 +39,7 @@ export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
   
-  // Currency state (defaults to USD for global, auto-switches to NGN if in Nigeria)
-  const [selectedCurrency, setSelectedCurrency] = useState<"USD" | "NGN">("USD");
-  const [detectedCountry, setDetectedCountry] = useState<string>("GLOBAL");
-  const [exchangeRate, setExchangeRate] = useState<number>(1550);
+  // Background currency conversion state (UI displays USD, Paystack processes in background)
   const [celebrationNgn, setCelebrationNgn] = useState<number>(10850);
   const [plusNgn, setPlusNgn] = useState<number>(9300);
   
@@ -60,27 +57,13 @@ export default function PricingPage() {
   });
 
   useEffect(() => {
-    // Fetch live currency exchange rate and edge geo-location
+    // Fetch live currency exchange rate silently in the background for Paystack processing
     fetch('/api/currency/rate')
       .then(res => res.json())
       .then(data => {
         if (data) {
-          if (data.rate) setExchangeRate(data.rate);
           if (data.celebrationNgn) setCelebrationNgn(data.celebrationNgn);
           if (data.plusNgn) setPlusNgn(data.plusNgn);
-          if (data.country) setDetectedCountry(data.country);
-
-          // Check timezone and locale on the client as a secondary check
-          const isLagosTimezone = typeof Intl !== "undefined" && 
-            Intl.DateTimeFormat().resolvedOptions().timeZone?.toLowerCase().includes("lagos");
-          const isNigerianLocale = typeof navigator !== "undefined" && 
-            (navigator.language === "en-NG" || navigator.languages?.includes("en-NG"));
-
-          if (data.isNigeria || isLagosTimezone || isNigerianLocale) {
-            setSelectedCurrency("NGN");
-          } else {
-            setSelectedCurrency("USD");
-          }
         }
       })
       .catch(() => {});
@@ -149,6 +132,10 @@ export default function PricingPage() {
       a: "For universities, large student groups, galas, and wedding planners, this tier provides high-resolution, print-ready QR codes for physical table displays, custom brand colors/logos, and a pre-moderation approval queue so organizers can review all submitted notes before they appear publicly on screens."
     },
     {
+      q: "Can I pay with my regular local bank card?",
+      a: "Yes, 100%! Even though prices are displayed in USD, checkout is powered by Paystack. All standard local debit cards (Verve, Mastercard, Visa), mobile transfers, Apple Pay, and foreign cards work seamlessly without needing a domiciliary account."
+    },
+    {
       q: "What payment methods are supported?",
       a: "We accept all major debit and credit cards (Visa, Mastercard, Verve), Apple Pay, and secure bank transfers powered by Paystack."
     }
@@ -158,7 +145,7 @@ export default function PricingPage() {
     <div className="flex-1 flex flex-col items-center px-4 py-12 md:py-20 bg-[#FAF9F6] min-h-screen text-[#111]">
       
       {/* Hero Header */}
-      <div className="text-center max-w-3xl mx-auto mb-16 mt-4">
+      <div className="text-center max-w-3xl mx-auto mb-10 mt-4">
         <div className="inline-flex items-center gap-2 bg-[#EBE9E2] px-4 py-1.5 rounded-full text-xs font-bold text-gray-700 tracking-widest uppercase mb-5">
           <Sparkles size={14} className="text-amber-600" /> Thoughtboard Pricing
         </div>
@@ -170,42 +157,12 @@ export default function PricingPage() {
         </p>
       </div>
 
-      {/* Live Currency & Worldwide Conversion Header Bar */}
-      <div className="mb-10 flex flex-col sm:flex-row items-center justify-between gap-4 w-full max-w-6xl px-2">
-        <div className="inline-flex items-center gap-2 bg-white border border-gray-200/90 shadow-2xs px-3.5 py-1.5 rounded-full text-xs text-gray-600">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>
-            {selectedCurrency === "NGN" 
-              ? `Auto-detected: Nigeria (Live rate: 1 USD ≈ ₦${exchangeRate.toLocaleString()})`
-              : `Auto-detected: International (Direct USD Card Checkout)`}
-          </span>
-        </div>
-
-        {/* Currency Switcher */}
-        <div className="flex items-center gap-1 bg-[#EBE9E2] p-1 rounded-full text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setSelectedCurrency("USD")}
-            className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
-              selectedCurrency === "USD"
-                ? "bg-white text-gray-900 shadow-xs font-bold"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            <span>🌍 USD ($)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedCurrency("NGN")}
-            className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
-              selectedCurrency === "NGN"
-                ? "bg-white text-gray-900 shadow-xs font-bold"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            <span>🇳🇬 NGN (₦)</span>
-          </button>
-        </div>
+      {/* Payment Reassurance Pill */}
+      <div className="mb-10 inline-flex flex-wrap items-center justify-center gap-2 bg-white/90 border border-gray-200/90 px-4 py-2 rounded-full text-xs text-gray-600 shadow-2xs">
+        <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
+        <span>Local cards (<strong>Verve</strong>, <strong>Mastercard</strong>, <strong>Visa</strong>) & international cards accepted</span>
+        <span className="text-gray-300 hidden sm:inline">•</span>
+        <span className="text-gray-500">Auto-cleared at checkout</span>
       </div>
 
       {/* Main 3-Column Cards Grid */}
@@ -276,19 +233,14 @@ export default function PricingPage() {
             
             <div className="flex items-baseline gap-2 mb-2">
               <span className="text-4xl font-extrabold font-sans tracking-tight text-white">
-                {selectedCurrency === "USD" ? "$7" : `₦${celebrationNgn.toLocaleString()}`}
+                $7
               </span>
               <span className="text-amber-200/80 text-sm font-medium">one-time pass</span>
-              {selectedCurrency === "USD" && (
-                <span className="text-xs text-amber-300/90 font-mono ml-auto bg-white/10 px-2 py-0.5 rounded-full">
-                  ≈ ₦{celebrationNgn.toLocaleString()}
-                </span>
-              )}
             </div>
-            <p className="text-[11px] text-gray-400 mb-6">
-              {selectedCurrency === "USD" 
-                ? `Billed via Paystack (~₦${celebrationNgn.toLocaleString()} at live rate)` 
-                : "Billed in NGN via card, transfer or Apple Pay"}
+            <p className="text-[11px] text-gray-300/80 mb-6 flex flex-wrap items-center gap-1.5">
+              <span>💳 Local & foreign cards accepted</span>
+              <span>•</span>
+              <span>No recurring subscription</span>
             </p>
 
             <div className="border-t border-white/10 pt-6 mb-8">
@@ -331,9 +283,7 @@ export default function PricingPage() {
             label={
               user?.plan === 'PRO' 
                 ? "Pass Active — Add Another" 
-                : selectedCurrency === "USD"
-                  ? "Get Celebration Pass — $7"
-                  : `Get Celebration Pass — ₦${celebrationNgn.toLocaleString()}`
+                : "Get Celebration Pass — $7"
             }
             className="relative z-10 w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#0A1118] text-center py-4 rounded-full font-bold text-sm transition-all shadow-lg hover:shadow-amber-500/20 active:scale-[0.98] cursor-pointer disabled:opacity-50"
           />
@@ -350,19 +300,14 @@ export default function PricingPage() {
             
             <div className="flex items-baseline gap-2 mb-2">
               <span className="text-4xl font-extrabold font-sans tracking-tight text-[#111]">
-                {selectedCurrency === "USD" ? "$6" : `₦${plusNgn.toLocaleString()}`}
+                $6
               </span>
               <span className="text-gray-400 text-sm font-medium">/ month</span>
-              {selectedCurrency === "USD" && (
-                <span className="text-xs text-gray-500 font-mono ml-auto bg-gray-100 px-2 py-0.5 rounded-full">
-                  ≈ ₦{plusNgn.toLocaleString()}/mo
-                </span>
-              )}
             </div>
-            <p className="text-[11px] text-gray-400 mb-6">
-              {selectedCurrency === "USD" 
-                ? `Billed via Paystack (~₦${plusNgn.toLocaleString()}/mo at live rate)` 
-                : "Billed in NGN via card, transfer or Apple Pay"}
+            <p className="text-[11px] text-gray-500 mb-6 flex flex-wrap items-center gap-1.5">
+              <span>💳 Local & foreign cards accepted</span>
+              <span>•</span>
+              <span>Cancel anytime</span>
             </p>
 
             <div className="border-t border-gray-100 pt-6 mb-8">
@@ -401,9 +346,7 @@ export default function PricingPage() {
             label={
               user?.plan === 'PRO' 
                 ? "Your Current Plan (Active)" 
-                : selectedCurrency === "USD"
-                  ? "Subscribe to Plus — $6/mo"
-                  : `Subscribe to Plus — ₦${plusNgn.toLocaleString()}/mo`
+                : "Subscribe to Plus — $6/mo"
             }
             className="w-full bg-[#0A1118] hover:bg-black text-white text-center py-3.5 rounded-full font-semibold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50"
           />
