@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../../../lib/auth';
-import { Wall, Note, Appreciation, User } from '../../../../../lib/sequelize';
+import { Wall, Note, Appreciation, User, ensureSchema } from '../../../../../lib/sequelize';
 import { UAParser } from 'ua-parser-js';
 
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    await ensureSchema();
     const { slug } = await params;
     const wall = await Wall.findOne({ where: { slug } });
 
@@ -80,6 +81,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
+    await ensureSchema();
     const { slug } = await params;
     const wall = await Wall.findOne({ where: { slug } });
 

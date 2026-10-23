@@ -5,7 +5,7 @@ import { BottomNav } from "../components/BottomNav";
 import { 
   Settings, User, Pencil, Heart, FileText, Compass, 
   UserCog, Shield, HelpCircle, ChevronRight, LogOut, 
-  Link2, Mail, Share2, Loader2, Sparkles, Crown 
+  Link2, Mail, Share2, Loader2, Sparkles, Crown, Building2 
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -237,10 +237,17 @@ export default function ProfilePage() {
 
           <button 
             onClick={() => setIsEditing(true)}
-            className="w-full bg-[#0A1118] text-white py-3.5 rounded-full text-sm font-semibold hover:bg-black transition-colors mb-3 shadow-sm"
+            className="w-full bg-[#0A1118] text-white py-3.5 rounded-full text-sm font-semibold hover:bg-black transition-colors mb-3 shadow-sm cursor-pointer"
           >
             Edit Profile
           </button>
+
+          <Link 
+            href="/admin/inquiries"
+            className="w-full bg-white border border-gray-200 text-gray-800 py-3 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors mb-3 shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Building2 size={16} className="text-amber-600" /> Event Inquiries (Admin)
+          </Link>
 
           {user.plan !== 'PRO' && (
             <Link 

@@ -8,6 +8,7 @@ interface PricingPaystackButtonProps {
   user: any;
   isLoaded: boolean;
   tier: "celebration" | "plus";
+  amountInUsd: number;
   amountInNgn: number;
   label: string;
   className?: string;
@@ -17,6 +18,7 @@ export default function PricingPaystackButton({
   user,
   isLoaded,
   tier,
+  amountInUsd,
   amountInNgn,
   label,
   className
@@ -24,21 +26,29 @@ export default function PricingPaystackButton({
   const router = useRouter();
   const [isInitializing, setIsInitializing] = useState(false);
 
+  // Paystack processes in NGN kobo (amount * 100) which works seamlessly for both
+  // Nigerian cards and international Visa/Mastercard/Apple Pay worldwide
   const config = {
     reference: `${tier}_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
     email: user?.email || "guest@example.com",
-    amount: amountInNgn * 100, // Paystack expects amounts in kobo (NGN * 100)
+    amount: Math.round(amountInNgn * 100),
     currency: "NGN",
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_placeholder",
     metadata: {
       userId: user?.id,
       tier,
+      usdPrice: amountInUsd,
       planName: tier === "celebration" ? "Celebration Pass" : "Plus Membership",
       custom_fields: [
         {
           display_name: "Tier",
           variable_name: "tier",
           value: tier
+        },
+        {
+          display_name: "USD Value",
+          variable_name: "usd_value",
+          value: `$${amountInUsd}`
         }
       ]
     }

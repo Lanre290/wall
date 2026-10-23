@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import { User } from '../../../lib/sequelize'; // 3 levels up
+import { User, ensureSchema } from '../../../lib/sequelize'; // 3 levels up
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key';
 
 export async function POST(req: Request) {
   try {
+    await ensureSchema();
     const body = await req.json();
     const { email, name, avatarUrl } = body;
 

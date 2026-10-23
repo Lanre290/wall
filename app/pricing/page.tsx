@@ -18,7 +18,8 @@ import {
   Send, 
   ArrowRight,
   Heart,
-  HelpCircle
+  HelpCircle,
+  Loader2
 } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
 import { PRICING_TIERS } from "../../lib/pricing";
@@ -38,8 +39,17 @@ export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
   
+  // Currency state (defaults to USD for global, auto-switches to NGN if in Nigeria)
+  const [selectedCurrency, setSelectedCurrency] = useState<"USD" | "NGN">("USD");
+  const [detectedCountry, setDetectedCountry] = useState<string>("GLOBAL");
+  const [exchangeRate, setExchangeRate] = useState<number>(1550);
+  const [celebrationNgn, setCelebrationNgn] = useState<number>(10850);
+  const [plusNgn, setPlusNgn] = useState<number>(9300);
+  
   // Inquiry form state
   const [inquirySubmitted, setInquirySubmitted] = useState(false);
+  const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
+  const [inquiryError, setInquiryError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -50,6 +60,31 @@ export default function PricingPage() {
   });
 
   useEffect(() => {
+    // Fetch live currency exchange rate and edge geo-location
+    fetch('/api/currency/rate')
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (data.rate) setExchangeRate(data.rate);
+          if (data.celebrationNgn) setCelebrationNgn(data.celebrationNgn);
+          if (data.plusNgn) setPlusNgn(data.plusNgn);
+          if (data.country) setDetectedCountry(data.country);
+
+          // Check timezone and locale on the client as a secondary check
+          const isLagosTimezone = typeof Intl !== "undefined" && 
+            Intl.DateTimeFormat().resolvedOptions().timeZone?.toLowerCase().includes("lagos");
+          const isNigerianLocale = typeof navigator !== "undefined" && 
+            (navigator.language === "en-NG" || navigator.languages?.includes("en-NG"));
+
+          if (data.isNigeria || isLagosTimezone || isNigerianLocale) {
+            setSelectedCurrency("NGN");
+          } else {
+            setSelectedCurrency("USD");
+          }
+        }
+      })
+      .catch(() => {});
+
     fetch('/api/users/me')
       .then(res => {
         if (res.ok) return res.json();
@@ -71,9 +106,29 @@ export default function PricingPage() {
       });
   }, []);
 
-  const handleInquirySubmit = (e: React.FormEvent) => {
+  const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setInquirySubmitted(true);
+    setIsSubmittingInquiry(true);
+    setInquiryError(null);
+
+    try {
+      const res = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit inquiry");
+      }
+
+      setInquirySubmitted(true);
+    } catch (err: any) {
+      setInquiryError(err.message || "An error occurred while submitting. Please try again.");
+    } finally {
+      setIsSubmittingInquiry(false);
+    }
   };
 
   const faqs = [
@@ -113,6 +168,44 @@ export default function PricingPage() {
         <p className="text-gray-600 text-base sm:text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
           Whether you are collecting graduation wishes, commemorating a birthday, or coordinating a campus milestone, choose the plan that honors your occasion.
         </p>
+      </div>
+
+      {/* Live Currency & Worldwide Conversion Header Bar */}
+      <div className="mb-10 flex flex-col sm:flex-row items-center justify-between gap-4 w-full max-w-6xl px-2">
+        <div className="inline-flex items-center gap-2 bg-white border border-gray-200/90 shadow-2xs px-3.5 py-1.5 rounded-full text-xs text-gray-600">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span>
+            {selectedCurrency === "NGN" 
+              ? `Auto-detected: Nigeria (Live rate: 1 USD ≈ ₦${exchangeRate.toLocaleString()})`
+              : `Auto-detected: International (Direct USD Card Checkout)`}
+          </span>
+        </div>
+
+        {/* Currency Switcher */}
+        <div className="flex items-center gap-1 bg-[#EBE9E2] p-1 rounded-full text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setSelectedCurrency("USD")}
+            className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+              selectedCurrency === "USD"
+                ? "bg-white text-gray-900 shadow-xs font-bold"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <span>🌍 USD ($)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedCurrency("NGN")}
+            className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 ${
+              selectedCurrency === "NGN"
+                ? "bg-white text-gray-900 shadow-xs font-bold"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <span>🇳🇬 NGN (₦)</span>
+          </button>
+        </div>
       </div>
 
       {/* Main 3-Column Cards Grid */}
@@ -181,10 +274,22 @@ export default function PricingPage() {
               For graduations, birthdays, farewells & milestone moments.
             </p>
             
-            <div className="flex items-baseline gap-1.5 mb-8">
-              <span className="text-4xl font-extrabold font-sans tracking-tight text-white">$7</span>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="text-4xl font-extrabold font-sans tracking-tight text-white">
+                {selectedCurrency === "USD" ? "$7" : `₦${celebrationNgn.toLocaleString()}`}
+              </span>
               <span className="text-amber-200/80 text-sm font-medium">one-time pass</span>
+              {selectedCurrency === "USD" && (
+                <span className="text-xs text-amber-300/90 font-mono ml-auto bg-white/10 px-2 py-0.5 rounded-full">
+                  ≈ ₦{celebrationNgn.toLocaleString()}
+                </span>
+              )}
             </div>
+            <p className="text-[11px] text-gray-400 mb-6">
+              {selectedCurrency === "USD" 
+                ? `Billed via Paystack (~₦${celebrationNgn.toLocaleString()} at live rate)` 
+                : "Billed in NGN via card, transfer or Apple Pay"}
+            </p>
 
             <div className="border-t border-white/10 pt-6 mb-8">
               <p className="text-xs font-bold uppercase tracking-wider text-amber-300/90 mb-4">Everything in Free, plus:</p>
@@ -221,8 +326,15 @@ export default function PricingPage() {
             user={user}
             isLoaded={isLoaded}
             tier="celebration"
-            amountInNgn={10500}
-            label={user?.plan === 'PRO' ? "Pass Active — Add Another ($7)" : "Get Celebration Pass — $7"}
+            amountInUsd={7}
+            amountInNgn={celebrationNgn}
+            label={
+              user?.plan === 'PRO' 
+                ? "Pass Active — Add Another" 
+                : selectedCurrency === "USD"
+                  ? "Get Celebration Pass — $7"
+                  : `Get Celebration Pass — ₦${celebrationNgn.toLocaleString()}`
+            }
             className="relative z-10 w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#0A1118] text-center py-4 rounded-full font-bold text-sm transition-all shadow-lg hover:shadow-amber-500/20 active:scale-[0.98] cursor-pointer disabled:opacity-50"
           />
         </div>
@@ -236,10 +348,22 @@ export default function PricingPage() {
               For passionate curators, friend circles & continuous journaling.
             </p>
             
-            <div className="flex items-baseline gap-1 mb-8">
-              <span className="text-4xl font-extrabold font-sans tracking-tight text-[#111]">$6</span>
+            <div className="flex items-baseline gap-2 mb-2">
+              <span className="text-4xl font-extrabold font-sans tracking-tight text-[#111]">
+                {selectedCurrency === "USD" ? "$6" : `₦${plusNgn.toLocaleString()}`}
+              </span>
               <span className="text-gray-400 text-sm font-medium">/ month</span>
+              {selectedCurrency === "USD" && (
+                <span className="text-xs text-gray-500 font-mono ml-auto bg-gray-100 px-2 py-0.5 rounded-full">
+                  ≈ ₦{plusNgn.toLocaleString()}/mo
+                </span>
+              )}
             </div>
+            <p className="text-[11px] text-gray-400 mb-6">
+              {selectedCurrency === "USD" 
+                ? `Billed via Paystack (~₦${plusNgn.toLocaleString()}/mo at live rate)` 
+                : "Billed in NGN via card, transfer or Apple Pay"}
+            </p>
 
             <div className="border-t border-gray-100 pt-6 mb-8">
               <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Curator privileges:</p>
@@ -272,8 +396,15 @@ export default function PricingPage() {
             user={user}
             isLoaded={isLoaded}
             tier="plus"
-            amountInNgn={9000}
-            label={user?.plan === 'PRO' ? "Your Current Plan (Active)" : "Subscribe to Plus — $6/mo"}
+            amountInUsd={6}
+            amountInNgn={plusNgn}
+            label={
+              user?.plan === 'PRO' 
+                ? "Your Current Plan (Active)" 
+                : selectedCurrency === "USD"
+                  ? "Subscribe to Plus — $6/mo"
+                  : `Subscribe to Plus — ₦${plusNgn.toLocaleString()}/mo`
+            }
             className="w-full bg-[#0A1118] hover:bg-black text-white text-center py-3.5 rounded-full font-semibold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50"
           />
         </div>
@@ -473,12 +604,28 @@ export default function PricingPage() {
                     />
                   </div>
 
+                  {inquiryError && (
+                    <div className="bg-red-50 text-red-700 border border-red-200 text-xs p-3 rounded-xl font-medium">
+                      {inquiryError}
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="mt-2 w-full bg-[#0A1118] hover:bg-black text-white font-bold py-3.5 rounded-full text-sm transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
+                    disabled={isSubmittingInquiry}
+                    className="mt-2 w-full bg-[#0A1118] hover:bg-black text-white font-bold py-3.5 rounded-full text-sm transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    <Send size={16} />
-                    <span>Submit Inquiry</span>
+                    {isSubmittingInquiry ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Sending Inquiry...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send size={16} />
+                        <span>Submit Inquiry</span>
+                      </>
+                    )}
                   </button>
                 </form>
               </>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '../../../lib/auth';
-import { Wall, Note, User } from '../../../lib/sequelize';
+import { Wall, Note, User, ensureSchema } from '../../../lib/sequelize';
 
 // Simple slug generator
 function generateSlug(title: string) {
@@ -11,6 +11,7 @@ function generateSlug(title: string) {
 
 export async function GET(req: Request) {
   try {
+    await ensureSchema();
     const session = await getSessionUser();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -22,35 +23,40 @@ export async function GET(req: Request) {
     // Fetch user's walls, including notes to derive counts and thumbnails
     const walls = await Wall.findAll({
       where: { creatorId: session.userId },
-      include: [{ model: Note, attributes: ['color'] }],
+      attributes: ['id', 'slug', 'title', 'privacy', 'updatedAt', 'createdAt'],
+      include: [{ 
+        model: Note, 
+        attributes: ['color'],
+        required: false
+      }],
       order: sort === 'alpha' ? [['title', 'ASC']] : [['createdAt', 'DESC']],
     });
 
     // Format response to match frontend requirements
     const formattedWalls = walls.map((wall: any) => {
       const plainWall = wall.get({ plain: true });
+      const notesList = plainWall.Notes || plainWall.notes || [];
       return {
         id: plainWall.slug, // Map slug to id for frontend compatibility
         title: plainWall.title,
         type: plainWall.privacy,
-        notesCount: plainWall.Notes ? plainWall.Notes.length : 0,
-        lastActive: plainWall.updatedAt,
+        notesCount: notesList.length,
+        lastActive: plainWall.updatedAt || plainWall.createdAt,
         // Grab up to the last 3 note colors for the mobile thumbnails
-        thumbnails: plainWall.Notes 
-          ? plainWall.Notes.slice(-3).map((n: any) => n.color) 
-          : []
+        thumbnails: notesList.slice(-3).map((n: any) => n.color)
       };
     });
 
     return NextResponse.json({ walls: formattedWalls });
-  } catch (error) {
-    console.error('GET walls error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('GET walls error:', error?.message || error);
+    return NextResponse.json({ error: 'Internal server error', details: error?.message }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
+    await ensureSchema();
     const session = await getSessionUser();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
