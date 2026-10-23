@@ -8,6 +8,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -30,7 +31,9 @@ export default function LoginPage() {
         });
 
         if (res.ok) {
-          window.location.href = '/my-walls';
+          const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const redirectUrl = params?.get('redirect') || '/my-walls';
+          window.location.href = redirectUrl;
         } else {
           console.error('Login failed on our backend');
           setIsLoading(false);
@@ -76,16 +79,52 @@ export default function LoginPage() {
           </p>
 
           <div className="w-full flex flex-col gap-4">
+            {/* Terms & Privacy Agreement Checkbox */}
+            <label className="flex items-start gap-2.5 text-left text-xs text-gray-600 cursor-pointer select-none px-1">
+              <input 
+                type="checkbox"
+                id="terms-checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#0A1118] focus:ring-[#0A1118] accent-[#0A1118] cursor-pointer shrink-0"
+              />
+              <span className="leading-relaxed">
+                I agree to the{" "}
+                <Link 
+                  href="/terms" 
+                  target="_blank" 
+                  onClick={(e) => e.stopPropagation()} 
+                  className="underline font-semibold text-gray-800 hover:text-black"
+                >
+                  Terms of Use
+                </Link>{" "}
+                and{" "}
+                <Link 
+                  href="/privacy" 
+                  target="_blank" 
+                  onClick={(e) => e.stopPropagation()} 
+                  className="underline font-semibold text-gray-800 hover:text-black"
+                >
+                  Privacy Policy
+                </Link>.
+              </span>
+            </label>
+
+            {/* Continue With Google Button */}
             <button 
-              onClick={() => login()}
-              disabled={isLoading}
-              className="w-full bg-[#0A1118] text-white py-4 rounded-full font-medium flex items-center justify-center gap-3 hover:bg-black transition-colors shadow-lg shadow-black/5 disabled:opacity-70 disabled:cursor-not-allowed"
+              onClick={() => agreedToTerms && !isLoading && login()}
+              disabled={!agreedToTerms || isLoading}
+              className={`w-full py-4 rounded-full font-medium flex items-center justify-center gap-3 transition-all ${
+                !agreedToTerms || isLoading
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                  : "bg-[#0A1118] text-white hover:bg-black cursor-pointer shadow-lg shadow-black/10 active:scale-[0.99]"
+              }`}
             >
               {isLoading ? (
                 <span>Connecting...</span>
               ) : (
                 <>
-                  <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                  <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" className={!agreedToTerms ? "grayscale opacity-40" : ""}>
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
@@ -97,8 +136,8 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <p className="mt-8 text-xs text-gray-500 max-w-[250px] leading-relaxed">
-            By continuing, you agree to our <Link href="/terms" target="_blank" className="underline hover:text-gray-800">Terms of Service</Link> and <Link href="/privacy" target="_blank" className="underline hover:text-gray-800">Privacy Policy</Link>.
+          <p className="mt-6 text-[11px] text-gray-400">
+            🔒 Secure, one-tap authentication powered by Google.
           </p>
         </div>
       </div>
